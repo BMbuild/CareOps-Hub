@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CareOps Hub</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">CareOps Hub</div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="product" aria-selected="true">Produit · Brahim</button>
+      <button class="tab" role="tab" data-tab="implementation" aria-selected="false">Implémentation · Sarah</button>
+    </nav>
+    <button id="reset" class="ghost" title="Remettre les données de démo">Réinitialiser la démo</button>
+  </header>
+
+  <main>
+    <section class="readiness-strip" aria-label="Préparation au déploiement par client">
+      <h2>Préparation au déploiement</h2>
+      <div id="readiness-cards" class="cards"></div>
+    </section>
+
+    <!-- ESPACE PRODUIT -->
+    <section id="tab-product" class="workspace">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Problèmes techniques</h2>
+          <div class="filters">
+            <select id="filter-severity" aria-label="Filtrer par gravité"><option value="">Toutes les gravités</option></select>
+            <select id="filter-state" aria-label="Filtrer par état"><option value="">Tous les états</option></select>
+            <select id="filter-client" aria-label="Filtrer par client"><option value="">Tous les clients</option></select>
+          </div>
+        </div>
+        <div class="table-wrap"><table id="issues-table"></table></div>
+
+        <details class="add">
+          <summary>+ Nouveau problème</summary>
+          <form id="issue-form" class="form-grid">
+            <label>Titre<input name="title" required maxlength="160"></label>
+            <label>Fonctionnalité<select name="featureId"></select></label>
+            <label class="wide">Description<textarea name="description" rows="3" maxlength="2000"></textarea></label>
+            <fieldset class="wide"><legend>Clients touchés</legend><div id="issue-clients" class="checks"></div></fieldset>
+            <label>Gravité<select name="severity"></select></label>
+            <label>Statut initial<select name="state"></select></label>
+            <div class="ai-inline">
+              <button type="button" id="suggest-severity" class="ai">Suggérer la gravité avec Claude</button>
+              <p id="severity-suggestion" class="ai-note" hidden></p>
+            </div>
+            <div class="wide actions"><button type="submit">Créer le problème</button></div>
+          </form>
+        </details>
+      </div>
+
+      <div class="panel">
+        <h2>Fonctionnalités</h2>
+        <div class="table-wrap"><table id="features-table"></table></div>
+        <details class="add">
+          <summary>+ Nouvelle fonctionnalité</summary>
+          <form id="feature-form" class="form-grid">
+            <label>Nom<input name="name" required maxlength="120"></label>
+            <label>Statut<select name="status">
+              <option>Planifiée</option><option>En développement</option><option>Livrée</option>
+            </select></label>
+            <label class="wide">Description<input name="description" maxlength="500"></label>
+            <div class="wide actions"><button type="submit">Créer la fonctionnalité</button></div>
+          </form>
+        </details>
+      </div>
+    </section>
+
+    <!-- ESPACE IMPLÉMENTATION -->
+    <section id="tab-implementation" class="workspace" hidden>
+      <div class="panel">
+        <div class="panel-head">
+          <label class="client-picker">Client <select id="client-select"></select></label>
+          <details class="add inline">
+            <summary>+ Nouveau client</summary>
+            <form id="client-form" class="form-row">
+              <input name="name" placeholder="Nom du client" required maxlength="120">
+              <input name="goLiveDate" type="date" aria-label="Date de go-live">
+              <button type="submit">Ajouter</button>
+            </form>
+          </details>
+        </div>
+        <div id="readiness-banner" class="banner"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Étapes clés</h2>
+        <div class="table-wrap"><table id="milestones-table"></table></div>
+        <details class="add">
+          <summary>+ Nouvelle étape</summary>
+          <form id="milestone-form" class="form-grid">
+            <label>Nom<input name="name" required maxlength="160"></label>
+            <label>Échéance<input name="dueDate" type="date"></label>
+            <label>Responsable<input name="owner" maxlength="80"></label>
+            <label>Statut<select name="status"></select></label>
+            <div class="wide actions"><button type="submit">Ajouter l'étape</button></div>
+          </form>
+        </details>
+      </div>
+
+      <div class="panel">
+        <h2>Problèmes techniques qui touchent ce client</h2>
+        <p class="muted">En lecture seule : c'est l'équipe Produit qui les met à jour.</p>
+        <ul id="client-issues" class="issue-list"></ul>
+      </div>
+
+      <div class="panel">
+        <h2>Assistant Claude</h2>
+        <p class="muted">Claude propose, vous validez : rien n'est envoyé ni modifié automatiquement.</p>
+        <div class="ai-actions">
+          <button id="ai-summary" class="ai">Générer le résumé de préparation</button>
+          <button id="ai-email" class="ai">Rédiger l'e-mail au client</button>
+        </div>
+        <label class="ai-output">Résumé de préparation
+          <textarea id="summary-output" rows="5" placeholder="Le résumé apparaîtra ici. Vous pouvez le modifier."></textarea>
+        </label>
+        <label class="ai-output">Brouillon d'e-mail
+          <textarea id="email-output" rows="9" placeholder="Le brouillon apparaîtra ici. Relisez-le avant de l'envoyer."></textarea>
+        </label>
+        <button id="copy-email" class="ghost">Copier l'e-mail</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+  <script src="app.js" type="module"></script>
+</body>
+</html>

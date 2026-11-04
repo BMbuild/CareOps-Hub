@@ -1,0 +1,90 @@
+{
+  "clients": [
+    { "id": "c1", "name": "Horizon Soins à Domicile", "goLiveDate": "2026-11-20" },
+    { "id": "c2", "name": "CareFirst Brooklyn", "goLiveDate": "2026-12-01" },
+    { "id": "c3", "name": "Bien-Être Queens", "goLiveDate": "2026-11-12" }
+  ],
+  "features": [
+    { "id": "f1", "name": "Export EVV", "description": "Envoi des visites vérifiées à l'agrégateur de l'État", "status": "Livrée" },
+    { "id": "f2", "name": "Planification des visites", "description": "Planning des aides à domicile et import des horaires", "status": "Livrée" },
+    { "id": "f3", "name": "Facturation Medicaid", "description": "Génération des lignes de facturation par visite", "status": "En développement" },
+    { "id": "f4", "name": "Portail aidants", "description": "Application des aides pour pointer et voir leur planning", "status": "Livrée" }
+  ],
+  "issues": [
+    {
+      "id": "i1",
+      "title": "Export EVV rejeté par l'agrégateur de l'État",
+      "description": "Le fichier d'export est refusé : le format de la date de visite ne correspond pas à la spécification de l'État.",
+      "severity": "Critique",
+      "state": "Ouvert",
+      "featureId": "f1",
+      "clientIds": ["c1"],
+      "createdAt": "2026-10-28"
+    },
+    {
+      "id": "i2",
+      "title": "Doublons de visites après import du planning",
+      "description": "Certaines visites apparaissent deux fois après l'import CSV, ce qui fausse les heures des aides.",
+      "severity": "Moyenne",
+      "state": "En cours",
+      "featureId": "f2",
+      "clientIds": ["c2"],
+      "createdAt": "2026-10-25"
+    },
+    {
+      "id": "i3",
+      "title": "Code de facturation manquant pour les visites de nuit",
+      "description": "Les visites entre 22 h et 6 h n'ont pas de code de facturation ; un ajout manuel est possible.",
+      "severity": "Moyenne",
+      "state": "Ouvert",
+      "featureId": "f3",
+      "clientIds": ["c1", "c2"],
+      "createdAt": "2026-10-30"
+    },
+    {
+      "id": "i4",
+      "title": "Lenteur du portail aidants le lundi matin",
+      "description": "Le chargement du planning prend 8 à 10 secondes entre 7 h et 8 h le lundi.",
+      "severity": "Faible",
+      "state": "Ouvert",
+      "featureId": "f4",
+      "clientIds": ["c2"],
+      "createdAt": "2026-11-02"
+    },
+    {
+      "id": "i5",
+      "title": "Erreur de fuseau horaire sur les pointages",
+      "description": "Les pointages étaient enregistrés en UTC au lieu de l'heure locale.",
+      "severity": "Critique",
+      "state": "Résolu",
+      "featureId": "f1",
+      "clientIds": ["c3"],
+      "createdAt": "2026-10-10"
+    },
+    {
+      "id": "i6",
+      "title": "Libellés tronqués dans l'application mobile",
+      "description": "Les noms de patients longs sont coupés sur les petits écrans.",
+      "severity": "Faible",
+      "state": "Résolu",
+      "featureId": "f4",
+      "clientIds": ["c3"],
+      "createdAt": "2026-10-15"
+    }
+  ],
+  "milestones": [
+    { "id": "m1", "clientId": "c1", "name": "Réunion de lancement", "dueDate": "2026-10-06", "owner": "Sarah", "status": "Terminé", "blocker": "" },
+    { "id": "m2", "clientId": "c1", "name": "Migration des données patients", "dueDate": "2026-10-20", "owner": "Équipe données", "status": "Terminé", "blocker": "" },
+    { "id": "m3", "clientId": "c1", "name": "Test EVV avec l'État", "dueDate": "2026-11-06", "owner": "Sarah", "status": "Bloqué", "blocker": "L'export EVV est rejeté par l'agrégateur ; en attente d'un correctif Produit." },
+    { "id": "m4", "clientId": "c1", "name": "Formation des coordinateurs", "dueDate": "2026-11-14", "owner": "Équipe formation", "status": "À faire", "blocker": "" },
+
+    { "id": "m5", "clientId": "c2", "name": "Réunion de lancement", "dueDate": "2026-10-13", "owner": "Sarah", "status": "Terminé", "blocker": "" },
+    { "id": "m6", "clientId": "c2", "name": "Configuration des plannings", "dueDate": "2026-10-30", "owner": "Sarah", "status": "En cours", "blocker": "" },
+    { "id": "m7", "clientId": "c2", "name": "Test de facturation Medicaid", "dueDate": "2026-11-18", "owner": "Équipe facturation", "status": "À faire", "blocker": "" },
+    { "id": "m8", "clientId": "c2", "name": "Liste de contrôle go-live", "dueDate": "2026-11-28", "owner": "Sarah", "status": "À faire", "blocker": "" },
+
+    { "id": "m9", "clientId": "c3", "name": "Réunion de lancement", "dueDate": "2026-09-22", "owner": "Sarah", "status": "Terminé", "blocker": "" },
+    { "id": "m10", "clientId": "c3", "name": "Test EVV avec l'État", "dueDate": "2026-10-20", "owner": "Sarah", "status": "Terminé", "blocker": "" },
+    { "id": "m11", "clientId": "c3", "name": "Formation des coordinateurs", "dueDate": "2026-11-03", "owner": "Équipe formation", "status": "Terminé", "blocker": "" }
+  ]
+}

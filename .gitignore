@@ -1,0 +1,16 @@
+# Secrets : ne jamais publier
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Environnement Python et base locale
+.venv/
+__pycache__/
+.pytest_cache/
+data/*.db
+
+# Système et outils locaux
+.DS_Store
+.claude/
