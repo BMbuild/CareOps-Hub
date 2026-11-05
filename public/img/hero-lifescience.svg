@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b5f63"/>
+      <stop offset="0.45" stop-color="#0f8a7e"/>
+      <stop offset="1" stop-color="#3fb68b"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.82" cy="0.18" r="0.55">
+      <stop offset="0" stop-color="#ffd59e" stop-opacity="0.75"/>
+      <stop offset="0.35" stop-color="#ffb38a" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#ffb38a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cell" cx="0.4" cy="0.35" r="0.7">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="0.7" stop-color="#bdf5e2" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#bdf5e2" stop-opacity="0.05"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="320" fill="url(#sky)"/>
+  <rect width="1200" height="320" fill="url(#sun)"/>
+
+  <!-- Cellules -->
+  <g stroke="#e6fff6" stroke-opacity="0.35" stroke-width="1.5">
+    <circle cx="1040" cy="230" r="62" fill="url(#cell)"/>
+    <circle cx="1040" cy="230" r="20" fill="#ffffff" fill-opacity="0.22"/>
+    <circle cx="905" cy="92" r="34" fill="url(#cell)"/>
+    <circle cx="905" cy="92" r="11" fill="#ffffff" fill-opacity="0.25"/>
+    <circle cx="1150" cy="70" r="24" fill="url(#cell)"/>
+    <circle cx="60" cy="270" r="40" fill="url(#cell)"/>
+  </g>
+
+  <!-- Double hélice d'ADN -->
+  <g transform="translate(640 30)" stroke-linecap="round">
+    <path d="M0 0 C 60 40, 60 80, 0 120 S -60 200, 0 240 S 60 320, 0 360" fill="none" stroke="#c8fff0" stroke-opacity="0.75" stroke-width="3"/>
+    <path d="M0 0 C -60 40, -60 80, 0 120 S 60 200, 0 240 S -60 320, 0 360" fill="none" stroke="#ffd7b0" stroke-opacity="0.7" stroke-width="3"/>
+    <g stroke="#ffffff" stroke-opacity="0.4" stroke-width="2">
+      <line x1="-38" y1="30" x2="38" y2="30"/><line x1="-45" y1="60" x2="45" y2="60"/><line x1="-38" y1="90" x2="38" y2="90"/>
+      <line x1="-38" y1="150" x2="38" y2="150"/><line x1="-45" y1="180" x2="45" y2="180"/><line x1="-38" y1="210" x2="38" y2="210"/>
+      <line x1="-38" y1="270" x2="38" y2="270"/>
+    </g>
+  </g>
+
+  <!-- Molécule -->
+  <g transform="translate(800 170)" stroke="#e6fff6" stroke-opacity="0.6" stroke-width="2.5">
+    <line x1="0" y1="0" x2="52" y2="-30"/><line x1="52" y1="-30" x2="104" y2="0"/>
+    <line x1="104" y1="0" x2="104" y2="60"/><line x1="0" y1="0" x2="0" y2="60"/>
+    <line x1="0" y1="60" x2="52" y2="90"/><line x1="52" y1="90" x2="104" y2="60"/>
+    <line x1="104" y1="0" x2="150" y2="-26"/>
+    <g fill="#ffffff" fill-opacity="0.85" stroke="none">
+      <circle cx="0" cy="0" r="7"/><circle cx="52" cy="-30" r="7"/><circle cx="104" cy="0" r="7"/>
+      <circle cx="104" cy="60" r="7"/><circle cx="52" cy="90" r="7"/><circle cx="0" cy="60" r="7"/>
+    </g>
+    <circle cx="150" cy="-26" r="10" fill="#ffb38a" stroke="none"/>
+  </g>
+
+  <!-- Ligne de battement de cœur -->
+  <path d="M0 250 H 330 l 18 -34 l 20 74 l 24 -120 l 22 104 l 16 -24 H 1200" fill="none"
+        stroke="#ffffff" stroke-opacity="0.5" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- Croix médicale -->
+  <g transform="translate(1110 150)" fill="#ffffff" fill-opacity="0.9">
+    <rect x="-9" y="-26" width="18" height="52" rx="4"/>
+    <rect x="-26" y="-9" width="52" height="18" rx="4"/>
+  </g>
+</svg>
