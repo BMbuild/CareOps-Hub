@@ -69,7 +69,7 @@ Brahim et Sarah écrivent dans la même source ; l'état de préparation est rec
 ### Espace Produit (Brahim)
 
 - **P1** : Créer, modifier et supprimer une fonctionnalité (nom, description, statut).
-- **P2** : Créer un problème technique lié à une fonctionnalité et à un ou plusieurs clients.
+- **P2** : Créer un problème technique lié à une fonctionnalité et à un ou plusieurs clients, à « Tous les clients », ou à aucun client s'il reste à trier (« À trier »).
 - **P3** : Donner à chaque problème une gravité : Critique, Moyenne, Faible (hypothèse à valider, voir README).
 - **P4** : Suivre l'état de résolution : Ouvert, En cours, Résolu.
 - **P5** : Filtrer les problèmes par gravité, état et client.
@@ -86,7 +86,7 @@ Brahim et Sarah écrivent dans la même source ; l'état de préparation est rec
 
 L'état se calcule automatiquement pour chaque client, dans cet ordre :
 
-1. **Non prêt** (rouge) : au moins un problème **Critique** non résolu touche ce client, ou une étape est **Bloquée**.
+1. **Non prêt** (rouge) : au moins un problème **Critique** non résolu touche ce client, ou une étape est **Bloquée**. Un problème touche les clients auxquels il est lié ; marqué « Tous les clients » ou lié à aucun client (« À trier »), il les touche tous. Un Critique ouvert bloque donc toujours au moins un client.
 2. **À risque** (orange) : une étape est en retard.
 3. **Prêt** (vert) : toutes les étapes sont terminées et aucun problème Critique n'est ouvert.
 4. **En cours** (gris) : tous les autres cas.
@@ -113,7 +113,7 @@ Cinq objets suffisent. Le lien clé est `Problème.clients` : c'est lui qui fait
 | --- | --- | --- |
 | Client | id, nom, date de go-live | Sarah |
 | Fonctionnalité | id, nom, description, statut | Brahim |
-| Problème | id, titre, description, gravité, état, fonctionnalité, clients (liste), date de création | Brahim |
+| Problème | id, titre, description, gravité, état, fonctionnalité, clients (liste, peut être vide), tous les clients (oui/non), date de création | Brahim |
 | Étape | id, client, nom, échéance, responsable, statut, blocage (texte) | Sarah |
 | État de préparation | calculé à la volée, jamais stocké : statut + liste des raisons | Personne (automatique) |
 
