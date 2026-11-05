@@ -8,7 +8,7 @@ from functools import cache
 
 import anthropic
 
-from .readiness import SEVERITIES, is_late
+from .readiness import SEVERITIES, affects, is_late
 
 MODEL = "claude-opus-5-5"
 
@@ -61,7 +61,7 @@ def _ask(prompt: str, fmt: dict | None = None) -> str:
 
 
 def _client_context(client: dict, state: dict, readiness: dict, today: str) -> str:
-    issues = [i for i in state["issues"] if client["id"] in i["clientIds"]]
+    issues = [i for i in state["issues"] if affects(i, client["id"])]
     milestones = [m for m in state["milestones"] if m["clientId"] == client["id"]]
     features = {f["id"]: f["name"] for f in state["features"]}
 

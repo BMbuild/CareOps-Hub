@@ -30,7 +30,9 @@ CREATE TABLE IF NOT EXISTS issues (
     severity     TEXT NOT NULL CHECK (severity IN ('Critique', 'Moyenne', 'Faible')),
     state        TEXT NOT NULL CHECK (state IN ('Ouvert', 'En cours', 'Résolu')),
     feature_id   TEXT REFERENCES features(id) ON DELETE SET NULL,
-    created_at   TEXT NOT NULL
+    created_at   TEXT NOT NULL,
+    -- 1 = touche tous les clients, y compris ceux ajoutés plus tard (issue_clients reste vide).
+    all_clients  INTEGER NOT NULL DEFAULT 0 CHECK (all_clients IN (0, 1))
 );
 -- Un problème peut toucher plusieurs clients : c'est ce lien qui alimente la préparation.
 CREATE TABLE IF NOT EXISTS issue_clients (
@@ -53,7 +55,7 @@ CREATE TABLE IF NOT EXISTS milestones (
 COLUMNS = {
     "clients": {"name": "name", "goLiveDate": "go_live_date"},
     "features": {"name": "name", "description": "description", "status": "status"},
-    "issues": {"title": "title", "description": "description", "severity": "severity", "state": "state", "featureId": "feature_id"},
+    "issues": {"title": "title", "description": "description", "severity": "severity", "state": "state", "featureId": "feature_id", "allClients": "all_clients"},
     "milestones": {"clientId": "client_id", "name": "name", "dueDate": "due_date", "owner": "owner", "status": "status", "blocker": "blocker"},
 }
 
@@ -81,6 +83,9 @@ def init_db() -> None:
     """Crée les tables et charge les données de démo si la base est vide."""
     with connect() as conn:
         conn.executescript(SCHEMA)
+        # Base créée avant l'option « Tous les clients » : on ajoute la colonne.
+        if "all_clients" not in {r["name"] for r in conn.execute("PRAGMA table_info(issues)")}:
+            conn.execute("ALTER TABLE issues ADD COLUMN all_clients INTEGER NOT NULL DEFAULT 0 CHECK (all_clients IN (0, 1))")
         if conn.execute("SELECT COUNT(*) FROM clients").fetchone()[0] == 0:
             _seed(conn)
 
@@ -107,12 +112,21 @@ def _insert(conn, collection: str, item_id: str, values: dict, created_at: str |
     names = ", ".join(row)
     conn.execute(f"INSERT INTO {collection} ({names}) VALUES ({', '.join('?' * len(row))})", list(row.values()))
     if collection == "issues":
-        _set_issue_clients(conn, item_id, values.get("clientIds", []))
+        _set_issue_clients(conn, item_id, _client_ids(values))
+
+
+def _client_ids(values: dict) -> list[str]:
+    # « Tous les clients » remplace la liste : on ne garde pas de liens individuels.
+    return [] if values.get("allClients") else values.get("clientIds", [])
 
 
 def _sql_value(field: str, value):
     # Une fonctionnalité absente est stockée en NULL pour respecter la clé étrangère.
-    return (value or None) if field == "featureId" else value
+    if field == "featureId":
+        return value or None
+    if field == "allClients":
+        return int(bool(value))
+    return value
 
 
 def _set_issue_clients(conn, issue_id: str, client_ids: list[str]) -> None:
@@ -146,7 +160,8 @@ def load_state() -> dict:
         for r in conn.execute("SELECT * FROM issues ORDER BY rowid"):
             issue = _to_api("issues", r)
             issue["createdAt"] = r["created_at"]
-            issue["clientIds"] = links.get(r["id"], [])
+            issue["allClients"] = bool(r["all_clients"])
+            issue["clientIds"] = [] if issue["allClients"] else links.get(r["id"], [])
             state["issues"].append(issue)
     return state
 
@@ -179,7 +194,7 @@ def update(collection: str, item_id: str, values: dict) -> dict | None:
         params = [_sql_value(f, values.get(f, "")) for f in cols] + [item_id]
         conn.execute(f"UPDATE {collection} SET {assignments} WHERE id = ?", params)
         if collection == "issues":
-            _set_issue_clients(conn, item_id, values.get("clientIds", []))
+            _set_issue_clients(conn, item_id, _client_ids(values))
     return get(collection, item_id)
 
 
@@ -195,7 +210,7 @@ def _check_refs(conn, collection: str, values: dict) -> None:
         raise InvalidReference("Fonctionnalité inconnue.")
     # Un problème peut n'être lié à aucun client (« À trier ») : voir readiness.untriaged_critical.
     # Les clients indiqués, eux, doivent exister.
-    ids = list(dict.fromkeys(values.get("clientIds") or [])) if collection == "issues" else []
+    ids = list(dict.fromkeys(_client_ids(values) or [])) if collection == "issues" else []
     if ids:
         placeholders = ", ".join("?" * len(ids))
         found = conn.execute(f"SELECT COUNT(*) FROM clients WHERE id IN ({placeholders})", ids).fetchone()[0]

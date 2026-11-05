@@ -198,6 +198,8 @@ legend { font-size: 0.88rem; color: var(--muted); padding: 0 4px; }
 .checks { display: flex; gap: 16px; flex-wrap: wrap; }
 .checks label { display: flex; gap: 6px; align-items: center; color: var(--text); }
 .checks input { width: auto; }
+.all-clients { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; color: var(--text); }
+.all-clients input { width: auto; }
 .actions { display: flex; justify-content: flex-end; }
 .ai-inline { display: grid; gap: 6px; align-content: end; }
 .ai-note { margin: 0; padding: 8px 10px; background: var(--ai-soft); border-radius: 8px; font-size: 0.88rem; }
