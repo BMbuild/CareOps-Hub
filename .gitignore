@@ -1,16 +1,44 @@
-# Secrets : ne jamais publier
+# Environment variables and secrets: never commit
 .env
 .env.*
 !.env.example
+secrets.json
+credentials.json
 *.pem
 *.key
 
-# Environnement Python et base locale
-.venv/
+# Python
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
 .pytest_cache/
-data/*.db
+.venv/
+venv/
+env/
 
-# Système et outils locaux
-.DS_Store
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# IDE and local tooling
+.vscode/
+.idea/
 .claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing / coverage
+.coverage
+htmlcov/
+
+# Build artifacts
+dist/
+build/
