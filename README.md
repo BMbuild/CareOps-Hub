@@ -118,7 +118,7 @@ Readiness is an informational indicator only. The system does not authorize or a
 | Database (local development) | SQLite | Done |
 | Database (production) | PostgreSQL | Planned |
 | ORM | SQLAlchemy | Planned (the current code uses Python's built-in `sqlite3`) |
-| AI | Anthropic API (Claude), server-side only | Done, not yet tested against the live API |
+| AI | Anthropic API (Claude), server-side only | Done, tested against the live API (Nov 4, 2026) |
 | Source control | GitHub (private repository) | Done |
 | Deployment | Render | Planned |
 
@@ -233,6 +233,18 @@ The **+ New issue** form (+ Nouveau problème) sends `POST /api/issues` to the F
 
 `tests/test_tickets.py` replays this scenario automatically.
 
+## AI Features (tested November 4, 2026)
+
+All three run server-side with `claude-opus-5-5`. Claude never changes data: a person reviews every suggestion.
+
+| Feature | Where | Result of the live test |
+| --- | --- | --- |
+| Severity suggestion | Product, new issue form | Weekend EVV export rejected with no workaround → **Critical**, with a one-sentence justification (valid JSON, 3.4 s) |
+| Readiness summary | Implementation | 4 sentences matching the data: blocker, go-live risk, next action and owner |
+| Client update email | Implementation | Starts with a subject line, honest about the go-live date, no internal jargon |
+
+Outputs are plain text (no Markdown) with dates written out in full, because they are shown in text areas and copied into emails.
+
 ## Core User Journey
 
 1. Product Manager creates a Critical technical issue.
@@ -323,6 +335,25 @@ The plan above and the current code differ on these points. Brahim and Sarah nee
 | Frontend layout | Separate `product/` and `implementation/` pages | One page with two tabs (`public/`) |
 | Data access | SQLAlchemy | Built-in `sqlite3` |
 | Interface language | Not specified | French |
+
+## Progress and Next Steps
+
+### Where we stopped (November 4, 2026)
+
+- [x] Shared private repository, both partners connected, secrets guard in place
+- [x] PRD and README (user stories, assumptions and validation)
+- [x] Component 1: technical issue creation, verified end to end
+- [x] Readiness rules and both workspaces working on FastAPI + SQLite
+- [x] Three Claude features tested against the live API
+- [x] Layout works on phone width (no horizontal scroll)
+
+### Next steps
+
+1. Brahim and Sarah settle the [Open Decisions](#open-decisions), starting with: is an issue linked to milestones or to clients?
+2. Implement issue-to-milestone linking if chosen (required by the Definition of Done).
+3. Align the readiness rules with the decision (two states or four).
+4. Move data access to SQLAlchemy, then prepare PostgreSQL and the Render deployment.
+5. Run the validation plan for assumption A1 (severity levels) with 2 or 3 testers.
 
 ## License
 

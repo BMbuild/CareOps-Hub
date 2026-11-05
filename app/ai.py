@@ -14,7 +14,9 @@ MODEL = "claude-opus-5-5"
 
 SYSTEM = """Tu es l'assistant de CareOps Hub, un outil qui suit les implémentations clients d'un éditeur de logiciels pour les soins à domicile.
 Tu réponds en français, de façon brève, factuelle et professionnelle.
-Tu t'appuies uniquement sur les données fournies ; si une information manque, dis-le au lieu de l'inventer."""
+Tu t'appuies uniquement sur les données fournies ; si une information manque, dis-le au lieu de l'inventer.
+Tes textes s'affichent dans des zones de texte brut : n'utilise jamais de Markdown (ni astérisques, ni dièses, ni listes à puces).
+Écris les dates en toutes lettres, par exemple « 20 novembre 2026 », jamais au format 2026-11-20."""
 
 
 class AIError(Exception):
