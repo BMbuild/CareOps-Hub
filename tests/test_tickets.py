@@ -161,3 +161,48 @@ def test_bout_en_bout_critique_puis_resolution():
         # Le résultat est recalculé à partir des données enregistrées, après un « rechargement ».
     with TestClient(app) as client:
         assert client.get("/api/state").json()["readiness"]["c3"]["status"] == "Prêt"
+
+
+def test_tous_les_clients_bloque_aussi_les_clients_ajoutes_plus_tard():
+    """« Tous les clients » : bloque chaque client, y compris un client créé après le problème."""
+    with TestClient(app) as client:
+        issue = client.post("/api/issues", json={"title": "Panne de connexion", "severity": "Critique", "allClients": True, "clientIds": ["c1"]}).json()
+        assert issue["allClients"] is True
+        assert issue["clientIds"] == []  # la liste individuelle est remplacée
+
+        new = client.post("/api/clients", json={"name": "Nouveau client"}).json()
+        readiness = client.get("/api/state").json()["readiness"]
+        for cid in ("c1", "c2", "c3", new["id"]):
+            assert readiness[cid]["status"] == "Non prêt", cid
+            assert "Panne de connexion" in readiness[cid]["reasons"][0], cid
+            assert "non trié" not in " ".join(readiness[cid]["reasons"]), cid  # trié : il touche tout le monde
+
+        # Une mise à jour partielle (ex. l'état) garde l'option ; une fois résolu, plus aucun blocage.
+        client.put(f"/api/issues/{issue['id']}", json={"state": "En cours"})
+        assert next(i for i in client.get("/api/issues").json() if i["id"] == issue["id"])["allClients"] is True
+        client.put(f"/api/issues/{issue['id']}", json={"state": "Résolu"})
+        assert client.get("/api/state").json()["readiness"]["c3"]["status"] == "Prêt"
+
+
+def test_tous_les_clients_peut_etre_retire():
+    with TestClient(app) as client:
+        issue = client.post("/api/issues", json={"title": "Lenteur", "severity": "Critique", "allClients": True}).json()
+        client.put(f"/api/issues/{issue['id']}", json={"allClients": False, "clientIds": ["c1"]})
+        saved = next(i for i in client.get("/api/issues").json() if i["id"] == issue["id"])
+        assert (saved["allClients"], saved["clientIds"]) == (False, ["c1"])
+        assert client.get("/api/state").json()["readiness"]["c3"]["status"] == "Prêt"
+
+
+def test_ancienne_base_sans_colonne_all_clients_est_migree(tmp_path, monkeypatch):
+    import sqlite3
+
+    from app import db
+
+    path = tmp_path / "ancienne.db"
+    monkeypatch.setenv("CAREOPS_DB", str(path))
+    old_schema = db.SCHEMA.replace(",\n    -- 1 = touche tous les clients, y compris ceux ajoutés plus tard (issue_clients reste vide).\n    all_clients  INTEGER NOT NULL DEFAULT 0 CHECK (all_clients IN (0, 1))", "")
+    assert "all_clients" not in old_schema
+    with sqlite3.connect(path) as conn:
+        conn.executescript(old_schema)
+    db.init_db()
+    assert all(i["allClients"] is False for i in db.load_state()["issues"])

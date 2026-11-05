@@ -24,17 +24,21 @@ def _names(items: list[dict], key: str) -> str:
     return ", ".join(x[key] for x in items)
 
 
+def affects(issue: dict, client_id: str) -> bool:
+    return issue.get("allClients", False) or client_id in issue["clientIds"]
+
+
 def untriaged_critical(state: dict) -> list[dict]:
     """Critiques ouverts liés à aucun client (« À trier »).
 
     On ne sait pas encore qui est touché : par prudence, ils bloquent TOUS les clients
     jusqu'au tri. Aucun Critique ouvert ne peut donc laisser passer un client.
     """
-    return [i for i in state["issues"] if i["severity"] == "Critique" and i["state"] != "Résolu" and not i["clientIds"]]
+    return [i for i in state["issues"] if i["severity"] == "Critique" and i["state"] != "Résolu" and not i["clientIds"] and not i.get("allClients")]
 
 
 def compute_readiness(client: dict, state: dict, today: str) -> dict:
-    issues = [i for i in state["issues"] if client["id"] in i["clientIds"] and i["state"] != "Résolu"]
+    issues = [i for i in state["issues"] if affects(i, client["id"]) and i["state"] != "Résolu"]
     milestones = [m for m in state["milestones"] if m["clientId"] == client["id"]]
 
     critical = [i for i in issues if i["severity"] == "Critique"]

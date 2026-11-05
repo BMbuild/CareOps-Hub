@@ -58,7 +58,7 @@
             <label>Titre<input name="title" required maxlength="160"></label>
             <label>Fonctionnalité<select name="featureId"></select></label>
             <label class="wide">Description<textarea name="description" rows="3" maxlength="2000"></textarea></label>
-            <fieldset class="wide"><legend>Clients touchés <span class="muted">(laisser vide si on ne sait pas encore : « À trier »)</span></legend><div id="issue-clients" class="checks"></div></fieldset>
+            <fieldset class="wide"><legend>Clients touchés <span class="muted">(laisser vide si on ne sait pas encore : « À trier »)</span></legend><label class="all-clients"><input type="checkbox" id="issue-all-clients"> <strong>Tous les clients</strong> <span class="muted">(y compris ceux ajoutés plus tard)</span></label><div id="issue-clients" class="checks"></div></fieldset>
             <label>Gravité<select name="severity"></select></label>
             <label>Statut initial<select name="state"></select></label>
             <div class="ai-inline">

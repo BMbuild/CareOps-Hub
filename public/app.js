@@ -110,7 +110,7 @@ function renderProduct() {
 
   const rank = (i) => (i.state === "Résolu" ? 10 : 0) + SEVERITIES.indexOf(i.severity);
   const issues = state.issues
-    .filter((i) => (!sev || i.severity === sev) && (!st || i.state === st) && (!cl || i.clientIds.includes(cl)))
+    .filter((i) => (!sev || i.severity === sev) && (!st || i.state === st) && (!cl || affects(i, cl)))
     .sort((a, b) => rank(a) - rank(b));
 
   $("#issues-table").innerHTML = `
@@ -122,7 +122,7 @@ function renderProduct() {
               (i) => `<tr class="${i.state === "Résolu" ? "resolved" : ""}" data-id="${esc(i.id)}">
           <td><strong>${esc(i.title)}</strong><div class="sub">${esc(i.description)}</div></td>
           <td>${esc(featureName(i.featureId))}</td>
-          <td>${i.clientIds.map((id) => esc(clientName(id))).join("<br>") || untriagedTag(i)}</td>
+          <td>${i.allClients ? `<span class="pill">Tous les clients</span>` : i.clientIds.map((id) => esc(clientName(id))).join("<br>") || untriagedTag(i)}</td>
           <td><select class="sev sev-${esc(i.severity)}" data-field="severity" aria-label="Gravité">${options(SEVERITIES, i.severity)}</select></td>
           <td><select data-field="state" aria-label="État">${options(ISSUE_STATES, i.state)}</select></td>
           <td><button class="icon" data-delete="issues" title="Supprimer">✕</button></td>
@@ -153,7 +153,15 @@ function renderProduct() {
   $("#issue-clients").innerHTML = state.clients
     .map((c) => `<label><input type="checkbox" name="clientIds" value="${esc(c.id)}"${checked.has(c.id) ? " checked" : ""}> ${esc(c.name)}</label>`)
     .join("");
+  syncAllClients();
 }
+
+// « Tous les clients » remplace la sélection individuelle : on grise les cases des clients.
+function syncAllClients() {
+  const all = $("#issue-all-clients").checked;
+  for (const box of $("#issue-clients").querySelectorAll("input")) box.disabled = all;
+}
+$("#issue-all-clients").addEventListener("change", syncAllClients);
 
 function renderImplementation() {
   fillSelect("#client-select", state.clients.map((c) => [c.id, c.name]), selectedClientId);
@@ -197,7 +205,7 @@ function renderImplementation() {
     }</tbody>`;
 
   // Un Critique ouvert « À trier » bloque tous les clients : on le montre aussi ici.
-  const issues = state.issues.filter((i) => i.clientIds.includes(client.id) || isUntriagedCritical(i));
+  const issues = state.issues.filter((i) => affects(i, client.id) || isUntriagedCritical(i));
   $("#client-issues").innerHTML = issues.length
     ? issues
         .map(
@@ -213,7 +221,11 @@ function renderImplementation() {
 
 // Problème sans client : « À trier ». S'il est Critique et ouvert, il bloque tous les clients jusqu'au tri.
 function isUntriagedCritical(i) {
-  return i.severity === "Critique" && i.state !== "Résolu" && i.clientIds.length === 0;
+  return i.severity === "Critique" && i.state !== "Résolu" && i.clientIds.length === 0 && !i.allClients;
+}
+
+function affects(i, clientId) {
+  return i.allClients || i.clientIds.includes(clientId);
 }
 
 function untriagedTag(i) {
@@ -280,9 +292,12 @@ function formData(form) {
 $("#issue-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const form = e.target;
-  const body = { ...formData(form), clientIds: [...form.querySelectorAll("input[name=clientIds]:checked")].map((x) => x.value) };
+  const allClients = $("#issue-all-clients").checked;
+  const clientIds = allClients ? [] : [...form.querySelectorAll("input[name=clientIds]:checked")].map((x) => x.value);
+  const body = { ...formData(form), clientIds, allClients };
   if (!(await mutate("POST", "/api/issues", body, "Problème créé"))) return;
   form.reset();
+  syncAllClients();
   $("#severity-suggestion").hidden = true;
   renderProduct();
 });

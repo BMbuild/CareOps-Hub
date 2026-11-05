@@ -124,6 +124,8 @@ A product teammate can log an issue before knowing which clients it affects (a g
 
 When in doubt, the rule blocks: an unknown scope never lets a client go live. Once the issue is linked to clients, only those clients stay blocked. The same applies if the last client of an open Critical issue is unlinked or deleted: the issue goes back to To triage and blocks everyone, so the blocker never disappears silently.
 
+For an issue that affects everyone (a login outage, for example), tick **All clients** (Tous les clients) instead of each client one by one. The issue then counts for every client, including clients added later, and is shown as triaged.
+
 The cost is a false block until triage, so the team should agree on a triage deadline (for example, a Critical issue is triaged the same day).
 
 ### Important Note
@@ -319,6 +321,26 @@ Outputs are plain text (no Markdown) with dates written out in full, because the
 - Incomplete milestones prevent Ready
 - Completed milestones and no critical blockers produce Ready
 - Data remains consistent across both workspaces
+
+## End-to-End Test Plan
+
+Brahim and Sarah run this workflow with a fictional healthcare client before merging. Pass criterion: the workflow runs without manually changing readiness, without data loss, and without affecting implementations that a linked issue does not touch. If a step fails, we document the incident, fix it, and rerun the test before merging.
+
+| # | Step | Expected result | Run 2026-11-05 |
+| --- | --- | --- | --- |
+| 1 | Sarah creates an implementation for a client and adds its required milestones | In Progress | ✅ |
+| 2 | Sarah marks every required milestone Completed | Ready (no blocker) | ✅ |
+| 3 | Brahim creates an issue in the Product workspace: severity Critical, status Open, linked to the client | Saved | ✅ |
+| 4 | Back in Sarah's workspace | Not Ready automatically, with the issue as the reason; other implementations unchanged | ✅ |
+| 5 | Brahim moves the issue from Open to Resolved | Saved | ✅ |
+| 6 | Readiness checked again | Ready again: all milestones Completed, no unresolved Critical issue | ✅ |
+| 7 | Edge case: Brahim creates a general Critical issue with no client | Visible as **To triage** (À trier) and blocks **every** implementation until it is linked to the affected clients or resolved ([fail-safe rule](#untriaged-issues-fail-safe)) | ✅ |
+| 8 | Both workspaces refreshed | All changes saved; readiness unchanged | ✅ |
+| 9 | Invalid client link, and calls straight to the API without the interface | Unknown client rejected (400); invalid severity rejected (400); readiness cannot be forced, it is always computed by the backend | ✅ |
+
+**Step 7, corrected.** The first version of this plan expected a general Critical issue to stay visible *without* blocking. That would let a client go live while a Critical issue waits for triage, which breaks the core promise. We kept the fail-safe rule: when the scope is unknown, the issue blocks everyone. "Without affecting other implementations" applies to issues linked to clients.
+
+**Still to do:** rerun the plan with Sarah after her branch `Implementation-Workplace` is merged. The 2026-11-05 run covered `main` only.
 
 ## Non-Goals
 

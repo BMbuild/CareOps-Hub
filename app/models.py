@@ -38,6 +38,7 @@ class Issue(Base):
     state: IssueState = "Ouvert"
     featureId: str = ""
     clientIds: list[str] = []
+    allClients: bool = False  # touche tous les clients, y compris ceux ajoutés plus tard
 
 
 class Milestone(Base):
