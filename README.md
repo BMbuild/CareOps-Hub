@@ -107,11 +107,16 @@ Defaults: severity Medium, status Open. Any other value is rejected by the API (
 
 ## Readiness Rules
 
-**Not Ready** when at least one unresolved Critical issue is linked to a milestone, OR at least one required milestone remains incomplete.
+**Not Ready** when an unresolved Critical issue affects the client, OR a milestone is Blocked. An unresolved Critical issue affects:
 
-**Ready** only when no unresolved Critical issues are linked to milestones, AND all required milestones have been completed.
+- the clients it is linked to;
+- every client, when it is marked **All clients** or linked to no client yet (**To triage**, see [below](#untriaged-issues-fail-safe)).
 
-The current implementation differs on a few points; see [Open Decisions](#open-decisions).
+An open Critical issue therefore always blocks at least one client. Medium and Low issues never block.
+
+**Ready** only when no unresolved Critical issue affects the client, AND all milestones are Completed.
+
+Otherwise the client is **At Risk** (a milestone is late) or **In Progress**. This rule is computed in `app/readiness.py` and proven by `tests/test_tickets.py`. The original plan linked issues to milestones and had two states only; see [Open Decisions](#open-decisions).
 
 ### Untriaged issues (fail-safe)
 
@@ -155,7 +160,7 @@ Readiness is an informational indicator only. The system does not authorize or a
 | Database (production) | PostgreSQL | Planned |
 | ORM | SQLAlchemy | Planned (the current code uses Python's built-in `sqlite3`) |
 | AI | Anthropic API (Claude), server-side only | Done, tested against the live API (Nov 4, 2026) |
-| Source control | GitHub (private repository) | Done |
+| Source control | GitHub | Done |
 | Deployment | Render | Planned |
 
 ## Architecture
@@ -284,7 +289,7 @@ Outputs are plain text (no Markdown) with dates written out in full, because the
 ## Core User Journey
 
 1. Product Manager creates a Critical technical issue.
-2. Issue is linked to an implementation milestone.
+2. Issue is linked to the affected client (the plan said a milestone; see [Open Decisions](#open-decisions)).
 3. Implementation Workspace displays the issue as a blocker.
 4. Readiness becomes Not Ready.
 5. Product Manager resolves the issue.
@@ -396,14 +401,16 @@ The plan above and the current code differ on these points. Brahim and Sarah nee
 
 ## Progress and Next Steps
 
-### Where we stopped (November 4, 2026)
+### Where we stopped (November 5, 2026)
 
-- [x] Shared private repository, both partners connected, secrets guard in place
+- [x] Shared repository, both partners connected, secrets guard in place
 - [x] PRD and README (user stories, assumptions and validation)
 - [x] Component 1: technical issue creation, verified end to end
 - [x] Readiness rules and both workspaces working on FastAPI + SQLite
 - [x] Three Claude features tested against the live API
 - [x] Layout works on phone width (no horizontal scroll)
+- [x] Fail-safe rule for untriaged Critical issues and the **All clients** option, with tests (19 pass)
+- [x] End-to-end test plan run on `main` (9/9 steps)
 
 ### Next steps
 
