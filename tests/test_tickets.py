@@ -56,7 +56,7 @@ def test_ticket_cree_enregistre_affiche_et_persistant():
 
 def test_statut_initial_par_defaut_ouvert():
     with TestClient(app) as client:
-        res = client.post("/api/issues", json={"title": "Sans statut"})
+        res = client.post("/api/issues", json={"title": "Sans statut", "clientIds": ["c2"]})
         assert res.status_code == 201
         assert res.json()["state"] == "Ouvert"
         assert res.json()["severity"] == "Moyenne"
@@ -79,3 +79,85 @@ def test_ticket_critique_bloque_le_deploiement():
         readiness = client.get("/api/state").json()["readiness"]["c3"]
         assert readiness["status"] == "Non prêt"
         assert "Panne EVV" in readiness["reasons"][0]
+
+
+def test_probleme_sans_client_accepte_a_trier():
+    """Un problème peut être signalé sans client (« À trier ») ; les clients indiqués doivent exister."""
+    with TestClient(app) as client:
+        res = client.post("/api/issues", json={"title": "Bug général", "severity": "Faible"})
+        assert res.status_code == 201
+        assert res.json()["clientIds"] == []
+        for client_ids in (["inconnu"], ["c3", "inconnu"]):
+            res = client.post("/api/issues", json={"title": "X", "severity": "Critique", "clientIds": client_ids})
+            assert res.status_code == 400
+            assert res.json()["error"] == "Client inconnu."
+
+
+def test_critique_non_trie_bloque_tous_les_clients():
+    """Promesse : aucun client ne passe en production avec un Critique ouvert, même non trié."""
+    with TestClient(app) as client:
+        def readiness():
+            return client.get("/api/state").json()["readiness"]
+
+        assert readiness()["c3"]["status"] == "Prêt"
+        issue = client.post("/api/issues", json={"title": "Panne de synchronisation", "severity": "Critique"}).json()
+        for cid, r in readiness().items():
+            assert r["status"] == "Non prêt", cid
+            assert any("non trié" in reason and "Panne de synchronisation" in reason for reason in r["reasons"]), cid
+
+        # Tri : relié à Horizon (c1) seulement → Bien-Être Queens (c3) redevient Prêt.
+        client.put(f"/api/issues/{issue['id']}", json={"clientIds": ["c1"]})
+        assert readiness()["c3"]["status"] == "Prêt"
+        assert "Panne de synchronisation" in readiness()["c1"]["reasons"][0]
+
+
+def test_non_trie_moyen_ou_resolu_ne_bloque_personne():
+    with TestClient(app) as client:
+        client.post("/api/issues", json={"title": "Libellé tronqué", "severity": "Moyenne"})
+        client.post("/api/issues", json={"title": "Ancienne panne", "severity": "Critique", "state": "Résolu"})
+        assert client.get("/api/state").json()["readiness"]["c3"]["status"] == "Prêt"
+
+
+def test_retirer_tous_les_clients_dun_critique_bloque_tout_le_monde():
+    """Décocher le dernier client ne fait pas disparaître le blocage : le Critique redevient « À trier »."""
+    with TestClient(app) as client:
+        issue = client.post("/api/issues", json={"title": "Lenteur", "severity": "Moyenne", "clientIds": ["c2"]}).json()
+        res = client.put(f"/api/issues/{issue['id']}", json={"severity": "Critique", "state": "En cours", "clientIds": ["c2", "c3"]})
+        assert res.status_code == 200
+        saved = next(i for i in client.get("/api/issues").json() if i["id"] == issue["id"])
+        assert (saved["severity"], saved["state"], sorted(saved["clientIds"])) == ("Critique", "En cours", ["c2", "c3"])
+
+        assert client.put(f"/api/issues/{issue['id']}", json={"clientIds": []}).status_code == 200
+        assert all(r["status"] == "Non prêt" for r in client.get("/api/state").json()["readiness"].values())
+
+
+def test_supprimer_le_seul_client_dun_critique_bloque_les_autres():
+    """Supprimer un client ne doit pas effacer un Critique ouvert : il devient « À trier » et bloque tout le monde."""
+    with TestClient(app) as client:
+        client.post("/api/issues", json={"title": "Panne", "severity": "Critique", "clientIds": ["c3"]})
+        assert client.delete("/api/clients/c3").status_code == 204
+        issue = next(i for i in client.get("/api/issues").json() if i["title"] == "Panne")
+        assert issue["clientIds"] == []
+        assert all(r["status"] == "Non prêt" for r in client.get("/api/state").json()["readiness"].values())
+
+
+def test_bout_en_bout_critique_puis_resolution():
+    """Scénario du plan : Critique → Non prêt ; résolu → Prêt seulement si toutes les étapes sont terminées."""
+    with TestClient(app) as client:
+        def status(cid):
+            return client.get("/api/state").json()["readiness"][cid]["status"]
+
+        # Bien-Être Queens (c3) : toutes ses étapes sont terminées.
+        # Horizon (c1) : des étapes restent à faire ; on résout d'abord son problème critique existant (i1).
+        assert status("c3") == "Prêt"
+        issue = client.post("/api/issues", json={"title": "Export EVV rejeté", "severity": "Critique", "clientIds": ["c1", "c3"]}).json()
+        assert status("c3") == "Non prêt" and status("c1") == "Non prêt"
+
+        client.put(f"/api/issues/{issue['id']}", json={"state": "Résolu"})
+        client.put("/api/issues/i1", json={"state": "Résolu"})
+        assert status("c3") == "Prêt"
+        assert status("c1") != "Prêt"  # étapes non terminées : pas prêt malgré zéro problème critique
+
+        # Le résultat est recalculé à partir des données enregistrées, après un « rechargement ».
+    with TestClient(app) as client:
+        assert client.get("/api/state").json()["readiness"]["c3"]["status"] == "Prêt"

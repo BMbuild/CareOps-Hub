@@ -34,7 +34,7 @@ When milestones and bugs live in separate tools, the "ready / not ready" call is
 
 | Value | Where it shows up | How we know it works |
 | --- | --- | --- |
-| The go/no-go rule is automatic | `app/readiness.py` (`compute_readiness`): any open Critical issue linked to a client sets it to **Not Ready**. Readiness is computed on every request and never stored, so it cannot go stale. | `tests/test_tickets.py`: creating a Critical issue makes the client Not Ready, and it survives a page refresh |
+| The go/no-go rule is automatic | `app/readiness.py` (`compute_readiness`): any open Critical issue linked to a client sets it to **Not Ready**, and an open Critical issue linked to no client yet blocks **every** client until it is triaged (see [Untriaged issues](#untriaged-issues-fail-safe)). Readiness is computed on every request and never stored, so it cannot go stale. | `tests/test_tickets.py`: creating a Critical issue makes the client Not Ready, and it survives a page refresh; an untriaged Critical issue makes every client Not Ready |
 | Blockers are visible in one place | Readiness cards at the top of both workspaces show the status and the reason, e.g. *Horizon Soins à Domicile*: Not Ready, "1 open critical issue (EVV export rejected by the State aggregator)" | Seeded demo scenario |
 | Product and Implementation share one view | When the Product workspace resolves an issue, the Implementation workspace's card updates on its own within 4 seconds | Manual end-to-end test in the browser |
 | Faster client communication | Claude drafts the readiness summary and the client email from the same data; a person reviews before anything is sent | Tested live against the API on November 4, 2026 |
@@ -112,6 +112,19 @@ Defaults: severity Medium, status Open. Any other value is rejected by the API (
 **Ready** only when no unresolved Critical issues are linked to milestones, AND all required milestones have been completed.
 
 The current implementation differs on a few points; see [Open Decisions](#open-decisions).
+
+### Untriaged issues (fail-safe)
+
+A product teammate can log an issue before knowing which clients it affects (a general bug found in internal testing, for example). Leaving **Affected clients** empty saves it as **To triage** (À trier).
+
+| Untriaged issue | Effect on readiness |
+| --- | --- |
+| Open **Critical** | **Every** client is Not Ready, with the reason "critical issue not triaged, to link to affected clients" |
+| Medium, Low, or Resolved | No effect |
+
+When in doubt, the rule blocks: an unknown scope never lets a client go live. Once the issue is linked to clients, only those clients stay blocked. The same applies if the last client of an open Critical issue is unlinked or deleted: the issue goes back to To triage and blocks everyone, so the blocker never disappears silently.
+
+The cost is a false block until triage, so the team should agree on a triage deadline (for example, a Critical issue is triaged the same day).
 
 ### Important Note
 
@@ -301,6 +314,7 @@ Outputs are plain text (no Markdown) with dates written out in full, because the
 ### Integration
 
 - Critical issue causes Not Ready
+- Untriaged Critical issue (no client yet) causes Not Ready for every client
 - Resolving critical issue removes blocker
 - Incomplete milestones prevent Ready
 - Completed milestones and no critical blockers produce Ready
