@@ -24,6 +24,27 @@ CareOps Hub provides a shared view of:
 
 By connecting these areas, teams can better understand how unresolved issues impact implementation progress.
 
+## Business Case
+
+**Value claimed:** no client goes live with an unresolved critical issue.
+
+When milestones and bugs live in separate tools, the "ready / not ready" call is made by hand, and a critical bug can slip through to go-live. In home care, that means missed visits, rejected EVV exports and billing errors for the agency, and a costly rollback and loss of trust for the vendor.
+
+**Where this value shows up in the product today:**
+
+| Value | Where it shows up | How we know it works |
+| --- | --- | --- |
+| The go/no-go rule is automatic | `app/readiness.py` (`compute_readiness`): any open Critical issue linked to a client sets it to **Not Ready**. Readiness is computed on every request and never stored, so it cannot go stale. | `tests/test_tickets.py`: creating a Critical issue makes the client Not Ready, and it survives a page refresh |
+| Blockers are visible in one place | Readiness cards at the top of both workspaces show the status and the reason, e.g. *Horizon Soins à Domicile*: Not Ready, "1 open critical issue (EVV export rejected by the State aggregator)" | Seeded demo scenario |
+| Product and Implementation share one view | When the Product workspace resolves an issue, the Implementation workspace's card updates on its own within 4 seconds | Manual end-to-end test in the browser |
+| Faster client communication | Claude drafts the readiness summary and the client email from the same data; a person reviews before anything is sent | Tested live against the API on November 4, 2026 |
+
+**Where the value is not proven yet:**
+
+- **Speed is not measured.** The target "find what blocks a client in under 30 seconds" (see Success Metrics) has not been timed with real testers.
+- **Severity scale is unvalidated.** With three levels (assumption A1), a serious issue with a costly workaround is either invisible in readiness (Medium) or wrongly blocks it (Critical).
+- **Two readiness rules exist.** Sarah's branch `Implementation-Workplace` links issues to milestones instead of clients. The team must agree on one rule before merging (see Open Decisions).
+
 ## Product Vision
 
 CareOps Hub provides a single source of truth for:
