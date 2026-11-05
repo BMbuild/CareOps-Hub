@@ -392,6 +392,7 @@ The plan above and the current code differ on these points. Brahim and Sarah nee
 | Frontend layout | Separate `product/` and `implementation/` pages | One page with two tabs (`public/`) |
 | Data access | SQLAlchemy | Built-in `sqlite3` |
 | Interface language | Not specified | French |
+| Critical issue with no link | Not specified. On Sarah's branch, a Critical issue linked to no milestone leaves the client READY | Fail-safe: an open Critical issue always blocks at least one client. Linked to clients: those clients. **All clients**: every client, including clients added later. No client yet (**To triage**): every client until triaged. Medium and Low issues never block. Proposed by Brahim; **to decide with Sarah**, together with a triage deadline (for example, same day) |
 
 ## Progress and Next Steps
 
@@ -407,6 +408,7 @@ The plan above and the current code differ on these points. Brahim and Sarah nee
 ### Next steps
 
 1. Brahim and Sarah settle the [Open Decisions](#open-decisions), starting with: is an issue linked to milestones or to clients?
+   Then agree on the fail-safe rule for Critical issues with no link, and on a triage deadline.
 2. Implement issue-to-milestone linking if chosen (required by the Definition of Done).
 3. Align the readiness rules with the decision (two states or four).
 4. Move data access to SQLAlchemy, then prepare PostgreSQL and the Render deployment.
