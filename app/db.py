@@ -193,3 +193,11 @@ def _check_refs(conn, collection: str, values: dict) -> None:
         raise InvalidReference("Client inconnu.")
     if collection == "issues" and values.get("featureId") and not conn.execute("SELECT 1 FROM features WHERE id = ?", (values["featureId"],)).fetchone():
         raise InvalidReference("Fonctionnalité inconnue.")
+    # Un problème peut n'être lié à aucun client (« À trier ») : voir readiness.untriaged_critical.
+    # Les clients indiqués, eux, doivent exister.
+    ids = list(dict.fromkeys(values.get("clientIds") or [])) if collection == "issues" else []
+    if ids:
+        placeholders = ", ".join("?" * len(ids))
+        found = conn.execute(f"SELECT COUNT(*) FROM clients WHERE id IN ({placeholders})", ids).fetchone()[0]
+        if found != len(ids):
+            raise InvalidReference("Client inconnu.")

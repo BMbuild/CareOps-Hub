@@ -24,15 +24,25 @@ def _names(items: list[dict], key: str) -> str:
     return ", ".join(x[key] for x in items)
 
 
+def untriaged_critical(state: dict) -> list[dict]:
+    """Critiques ouverts liés à aucun client (« À trier »).
+
+    On ne sait pas encore qui est touché : par prudence, ils bloquent TOUS les clients
+    jusqu'au tri. Aucun Critique ouvert ne peut donc laisser passer un client.
+    """
+    return [i for i in state["issues"] if i["severity"] == "Critique" and i["state"] != "Résolu" and not i["clientIds"]]
+
+
 def compute_readiness(client: dict, state: dict, today: str) -> dict:
     issues = [i for i in state["issues"] if client["id"] in i["clientIds"] and i["state"] != "Résolu"]
     milestones = [m for m in state["milestones"] if m["clientId"] == client["id"]]
 
     critical = [i for i in issues if i["severity"] == "Critique"]
+    untriaged = untriaged_critical(state)
     blocked = [m for m in milestones if m["status"] == "Bloqué"]
     late = [m for m in milestones if is_late(m, today)]
 
-    if critical or blocked:
+    if critical or blocked or untriaged:
         reasons = []
         if critical:
             s = "s" if len(critical) > 1 else ""
@@ -40,6 +50,9 @@ def compute_readiness(client: dict, state: dict, today: str) -> dict:
         if blocked:
             s = "s" if len(blocked) > 1 else ""
             reasons.append(f"{len(blocked)} étape{s} bloquée{s} ({_names(blocked, 'name')})")
+        if untriaged:
+            s = "s" if len(untriaged) > 1 else ""
+            reasons.append(f"{len(untriaged)} problème{s} critique{s} non trié{s}, à relier aux clients touchés ({_names(untriaged, 'title')})")
         return {"status": NOT_READY, "reasons": reasons}
 
     if late:

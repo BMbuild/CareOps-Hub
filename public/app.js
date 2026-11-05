@@ -122,7 +122,7 @@ function renderProduct() {
               (i) => `<tr class="${i.state === "Résolu" ? "resolved" : ""}" data-id="${esc(i.id)}">
           <td><strong>${esc(i.title)}</strong><div class="sub">${esc(i.description)}</div></td>
           <td>${esc(featureName(i.featureId))}</td>
-          <td>${i.clientIds.map((id) => esc(clientName(id))).join("<br>") || "—"}</td>
+          <td>${i.clientIds.map((id) => esc(clientName(id))).join("<br>") || untriagedTag(i)}</td>
           <td><select class="sev sev-${esc(i.severity)}" data-field="severity" aria-label="Gravité">${options(SEVERITIES, i.severity)}</select></td>
           <td><select data-field="state" aria-label="État">${options(ISSUE_STATES, i.state)}</select></td>
           <td><button class="icon" data-delete="issues" title="Supprimer">✕</button></td>
@@ -196,18 +196,30 @@ function renderImplementation() {
         : `<tr><td colspan="6" class="empty">Aucune étape pour ce client.</td></tr>`
     }</tbody>`;
 
-  const issues = state.issues.filter((i) => i.clientIds.includes(client.id));
+  // Un Critique ouvert « À trier » bloque tous les clients : on le montre aussi ici.
+  const issues = state.issues.filter((i) => i.clientIds.includes(client.id) || isUntriagedCritical(i));
   $("#client-issues").innerHTML = issues.length
     ? issues
         .map(
           (i) => `<li class="${i.state === "Résolu" ? "resolved" : ""}">
         <span class="sev sev-${esc(i.severity)}">${esc(i.severity)}</span>
-        <span>${esc(i.title)}</span>
+        <span>${esc(i.title)}${isUntriagedCritical(i) ? ` ${untriagedTag(i)}` : ""}</span>
         <span class="pill">${esc(i.state)}</span>
       </li>`
         )
         .join("")
     : `<li class="muted">Aucun problème signalé pour ce client.</li>`;
+}
+
+// Problème sans client : « À trier ». S'il est Critique et ouvert, il bloque tous les clients jusqu'au tri.
+function isUntriagedCritical(i) {
+  return i.severity === "Critique" && i.state !== "Résolu" && i.clientIds.length === 0;
+}
+
+function untriagedTag(i) {
+  return isUntriagedCritical(i)
+    ? `<span class="pill s-not-ready" title="Bloque tous les clients tant qu'il n'est pas relié aux clients touchés">À trier · bloque tous les clients</span>`
+    : `<span class="pill">À trier</span>`;
 }
 
 function fillSelect(target, pairs, selected) {
@@ -250,7 +262,8 @@ for (const [table, collection] of [["#issues-table", "issues"], ["#features-tabl
     const id = e.target.closest("tr")?.dataset.id;
     if (!field || !id) return;
     e.target.blur();
-    mutate("PUT", `/api/${collection}/${id}`, { [field]: e.target.value }, "Enregistré");
+    // Si le serveur refuse (ex. Critique sans client), on réaffiche la valeur enregistrée.
+    mutate("PUT", `/api/${collection}/${id}`, { [field]: e.target.value }, "Enregistré").then((ok) => ok || refresh(true));
   });
   el.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-delete]");
