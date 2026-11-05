@@ -8,13 +8,30 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">CareOps Hub</div>
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 40 40" aria-hidden="true">
+        <defs><linearGradient id="logo-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f8a7e"/><stop offset="1" stop-color="#3fb68b"/></linearGradient></defs>
+        <rect width="40" height="40" rx="11" fill="url(#logo-g)"/>
+        <rect x="16.5" y="8" width="7" height="24" rx="2" fill="#fff"/>
+        <rect x="8" y="16.5" width="24" height="7" rx="2" fill="#fff"/>
+        <path d="M6 22 h7 l2 -4 l3 8 l2 -4 h14" fill="none" stroke="#ffb38a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>CareOps <em>Hub</em></span>
+    </div>
     <nav class="tabs" role="tablist">
       <button class="tab" role="tab" data-tab="product" aria-selected="true">Produit · Brahim</button>
       <button class="tab" role="tab" data-tab="implementation" aria-selected="false">Implémentation · Sarah</button>
     </nav>
     <button id="reset" class="ghost" title="Remettre les données de démo">Réinitialiser la démo</button>
   </header>
+
+  <section class="hero" aria-label="Présentation">
+    <div class="hero-text">
+      <p class="hero-kicker">Soins à domicile · Sciences de la vie</p>
+      <h1>Chaque déploiement réussi, ce sont des soins qui arrivent à temps.</h1>
+      <p>Produit et Implémentation partagent les mêmes données, pour que chaque client démarre en confiance.</p>
+    </div>
+  </section>
 
   <main>
     <section class="readiness-strip" aria-label="Préparation au déploiement par client">
