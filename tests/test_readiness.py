@@ -93,7 +93,8 @@ def _overdue(created, today):
     return is_overdue_for_triage(issue, today)
 
 
-def test_retard_de_tri_saute_les_jours_feries():
+def test_retard_de_tri_saute_les_jours_feries(monkeypatch):
+    monkeypatch.delenv("CAREOPS_HOLIDAYS", raising=False)  # réglage par défaut : jours fériés fédéraux
     # Thanksgiving, jeudi 26 novembre 2026 : créé le mercredi, en retard le vendredi, pas le jeudi.
     assert not _overdue("2026-11-25", "2026-11-26")
     assert _overdue("2026-11-25", "2026-11-27")
@@ -149,3 +150,30 @@ def test_api_date_les_problemes_dans_le_fuseau_de_l_agence(monkeypatch):
         assert issue["createdAt"] == "2026-11-05"
         flags = {i["id"]: i["overdueForTriage"] for i in client.get("/api/state").json()["issues"]}
         assert flags[issue["id"]] is False
+
+
+def test_jours_feries_reglables(monkeypatch):
+    """CAREOPS_HOLIDAYS : la réponse de Sarah s'applique par un réglage, sans toucher au code."""
+    import pytest
+
+    from app.business_days import FEDERAL_HOLIDAYS, holidays
+
+    monkeypatch.delenv("CAREOPS_HOLIDAYS", raising=False)
+    assert holidays() == FEDERAL_HOLIDAYS
+    assert not _overdue("2027-05-28", "2027-05-31")  # Memorial Day sauté par défaut
+
+    # L'agence travaille les jours fériés : seuls les week-ends sont sautés.
+    monkeypatch.setenv("CAREOPS_HOLIDAYS", "")
+    assert holidays() == frozenset()
+    assert _overdue("2027-05-28", "2027-05-31")  # vendredi : en retard dès le lundi
+    assert _overdue("2026-11-25", "2026-11-26")  # mercredi : en retard le jeudi de Thanksgiving
+    assert not _overdue("2026-11-06", "2026-11-08")  # le week-end reste sauté
+
+    # L'agence ne ferme que Thanksgiving et Noël.
+    monkeypatch.setenv("CAREOPS_HOLIDAYS", "2026-11-26, 2026-12-25")
+    assert not _overdue("2026-11-25", "2026-11-26")  # Thanksgiving sauté
+    assert _overdue("2026-11-10", "2026-11-11")  # Veterans Day travaillé
+
+    monkeypatch.setenv("CAREOPS_HOLIDAYS", "2026-13-01")
+    with pytest.raises(ValueError, match="CAREOPS_HOLIDAYS"):
+        holidays()

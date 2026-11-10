@@ -238,9 +238,11 @@ Create a `.env` file in the project root from `.env.example`:
 ANTHROPIC_API_KEY=your_api_key_here
 # Optional: the agency's time zone for dates (default America/New_York)
 CAREOPS_TZ=America/New_York
+# Optional: holidays skipped by the triage deadline (see below)
+# CAREOPS_HOLIDAYS=2026-11-26,2026-12-25
 ```
 
-Without a key the application works normally; only the Claude buttons return an error. `CAREOPS_TZ` sets the time zone used for "today" and for issue creation dates, whatever the server's own time zone (Render runs in UTC). `DATABASE_URL` will be added when we move to PostgreSQL.
+Without a key the application works normally; only the Claude buttons return an error. `CAREOPS_TZ` sets the time zone used for "today" and for issue creation dates, whatever the server's own time zone (Render runs in UTC). `CAREOPS_HOLIDAYS` sets the holidays skipped by the triage deadline: unset means US federal holidays, empty means none (only weekends are skipped), and a comma-separated list of `YYYY-MM-DD` dates means only those days. An invalid date stops the server at startup with a clear message. `DATABASE_URL` will be added when we move to PostgreSQL.
 
 ## Security
 
@@ -448,10 +450,10 @@ Built by Sarah (PR #1, November 10): an open Critical issue still linked to no c
 | Friday before a Monday holiday (May 28, 2027) | Friday | Tuesday |
 | Wednesday before Thanksgiving (Nov 25, 2026) | Wednesday | Friday |
 
-- **Holidays:** US federal holidays (observed dates) for 2026 and 2027, listed in `app/business_days.py`. The list still has to be confirmed with Sarah: a home-care agency may work on some of them.
+- **Holidays:** by default, US federal holidays (observed dates) for 2026 and 2027, listed in `app/business_days.py`. The deadline should follow the calendar of whoever triages, so this is a setting, not code: if the agency works on federal holidays and expects triage that day, set `CAREOPS_HOLIDAYS=` (empty) and only weekends are skipped; if it closes on a few days only, list them. Still to confirm with Sarah.
 - **Time zone:** dates use the agency's time zone (`CAREOPS_TZ`, default `America/New_York`), not the server's. An issue created at 11:59 p.m. in New York is dated that day, even on a UTC server, and a Thursday issue is not flagged at 7 p.m. New York time just because it is already Friday in UTC.
 
-Tests: `test_retard_de_tri_en_jours_ouvres`, `test_retard_de_tri_saute_les_jours_feries`, `test_dates_dans_le_fuseau_de_l_agence`, `test_api_date_les_problemes_dans_le_fuseau_de_l_agence`.
+Tests: `test_retard_de_tri_en_jours_ouvres`, `test_retard_de_tri_saute_les_jours_feries`, `test_dates_dans_le_fuseau_de_l_agence`, `test_api_date_les_problemes_dans_le_fuseau_de_l_agence`, `test_jours_feries_reglables`.
 
 ## Progress and Next Steps
 
@@ -466,7 +468,7 @@ Tests: `test_retard_de_tri_en_jours_ouvres`, `test_retard_de_tri_saute_les_jours
 - [x] Fail-safe rule for untriaged Critical issues and the **All clients** option, with tests
 - [x] End-to-end test plan run on `main` (9/9 steps)
 - [x] Brahim and Sarah agreed on the [Decisions](#decisions)
-- [x] Overdue triage counts business days, skips US federal holidays and uses the agency's time zone; presentation demo scripted and covered by a test (31 pass)
+- [x] Overdue triage counts business days, skips US federal holidays and uses the agency's time zone, holidays configurable with `CAREOPS_HOLIDAYS`; presentation demo scripted and covered by a test (32 pass)
 - [x] Sarah's old branch `Implementation-Workplace` is not needed: its demo data predates the current model
 
 ### Next steps
@@ -474,7 +476,7 @@ Tests: `test_retard_de_tri_en_jours_ouvres`, `test_retard_de_tri_saute_les_jours
 1. Rehearse the [Presentation Demo](#presentation-demo) together, with Sarah driving the Implementation workspace; it doubles as the end-to-end rerun.
 2. Prepare the Render deployment (and decide whether production needs PostgreSQL or stays on SQLite).
 3. Run the validation plan for assumption A1 (severity levels) with 2 or 3 testers.
-4. Confirm with Sarah which holidays the agency observes, and extend the list beyond 2027.
+4. Ask Sarah who triages and which holidays apply, then set `CAREOPS_HOLIDAYS` accordingly (and extend the default list beyond 2027 if we keep it).
 
 ## License
 

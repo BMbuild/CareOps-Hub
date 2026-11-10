@@ -10,9 +10,9 @@ from zoneinfo import ZoneInfo
 
 DEFAULT_TZ = "America/New_York"
 
-# Jours fériés fédéraux américains (dates observées). À confirmer avec Sarah :
-# une agence de soins à domicile ne s'arrête pas forcément ces jours-là.
-HOLIDAYS = frozenset(date.fromisoformat(d) for d in (
+# Jours fériés fédéraux américains (dates observées), utilisés par défaut. À confirmer
+# avec Sarah : une agence de soins à domicile ne s'arrête pas forcément ces jours-là.
+FEDERAL_HOLIDAYS = frozenset(date.fromisoformat(d) for d in (
     "2026-01-01", "2026-01-19", "2026-02-16", "2026-05-25", "2026-06-19", "2026-07-03",
     "2026-09-07", "2026-10-12", "2026-11-11", "2026-11-26", "2026-12-25",
     "2027-01-01", "2027-01-18", "2027-02-15", "2027-05-31", "2027-06-18", "2027-07-05",
@@ -30,8 +30,27 @@ def local_today(now: datetime | None = None) -> str:
     return now.astimezone(agency_tz()).date().isoformat()
 
 
+def holidays() -> frozenset[date]:
+    """Jours fériés sautés par le délai de tri, réglables avec CAREOPS_HOLIDAYS.
+
+    - non définie : jours fériés fédéraux américains (2026-2027) ;
+    - vide : aucun jour férié, seuls les week-ends sont sautés ;
+    - dates AAAA-MM-JJ séparées par des virgules : seulement ces jours-là.
+    """
+    raw = os.getenv("CAREOPS_HOLIDAYS")
+    if raw is None:
+        return FEDERAL_HOLIDAYS
+    days = set()
+    for item in filter(None, (part.strip() for part in raw.split(","))):
+        try:
+            days.add(date.fromisoformat(item))
+        except ValueError:
+            raise ValueError(f"CAREOPS_HOLIDAYS : date invalide « {item} » (format attendu AAAA-MM-JJ).") from None
+    return frozenset(days)
+
+
 def is_business_day(day: date) -> bool:
-    return day.weekday() < 5 and day not in HOLIDAYS
+    return day.weekday() < 5 and day not in holidays()
 
 
 def next_business_day(day: date) -> date:

@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
 from . import ai, db
-from .business_days import local_today
+from .business_days import holidays, local_today
 from .models import MODELS
 from .readiness import compute_all, compute_readiness, is_overdue_for_triage
 
@@ -24,6 +24,7 @@ log = logging.getLogger("careops")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db.init_db()
+    holidays()  # une date invalide dans CAREOPS_HOLIDAYS arrête le démarrage avec un message clair
     if not os.environ.get("ANTHROPIC_API_KEY"):
         log.warning("ANTHROPIC_API_KEY absente : les fonctions IA sont désactivées.")
     yield
