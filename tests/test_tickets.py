@@ -111,6 +111,24 @@ def test_critique_non_trie_bloque_tous_les_clients():
         assert "Panne de synchronisation" in readiness()["c1"]["reasons"][0]
 
 
+def test_critique_non_trie_bloque_aussi_un_client_cree_apres():
+    """Demandé par Sarah : un nouveau client ne passe pas « Prêt » tant qu'un Critique attend le tri."""
+    with TestClient(app) as client:
+        issue = client.post("/api/issues", json={"title": "Faille de sécurité", "severity": "Critique"}).json()
+
+        new = client.post("/api/clients", json={"name": "Clinique Nouvelle"}).json()
+        step = client.post("/api/milestones", json={"clientId": new["id"], "name": "Formation"}).json()
+        client.put(f"/api/milestones/{step['id']}", json={"status": "Terminé"})
+
+        r = client.get("/api/state").json()["readiness"][new["id"]]
+        assert r["status"] == "Non prêt"
+        assert any("non trié" in reason and "Faille de sécurité" in reason for reason in r["reasons"])
+
+        # Seule la résolution lève le blocage : le nouveau client, toutes étapes terminées, passe Prêt.
+        client.put(f"/api/issues/{issue['id']}", json={"state": "Résolu"})
+        assert client.get("/api/state").json()["readiness"][new["id"]]["status"] == "Prêt"
+
+
 def test_non_trie_moyen_ou_resolu_ne_bloque_personne():
     with TestClient(app) as client:
         client.post("/api/issues", json={"title": "Libellé tronqué", "severity": "Moyenne"})
