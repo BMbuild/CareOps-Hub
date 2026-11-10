@@ -78,6 +78,9 @@ setInterval(() => refresh().catch(() => {}), 4000);
 
 const clientName = (id) => state.clients.find((c) => c.id === id)?.name ?? "—";
 const featureName = (id) => state.features.find((f) => f.id === id)?.name ?? "—";
+const milestoneName = (id) => state.milestones.find((m) => m.id === id)?.name;
+// Étape retardée par le problème, affichée sous ses clients.
+const stepNote = (i) => (milestoneName(i.milestoneId) ? `<div class="sub">Étape : ${esc(milestoneName(i.milestoneId))}</div>` : "");
 
 function render() {
   renderReadinessCards();
@@ -122,7 +125,7 @@ function renderProduct() {
               (i) => `<tr class="${i.state === "Résolu" ? "resolved" : ""}" data-id="${esc(i.id)}">
           <td><strong>${esc(i.title)}</strong><div class="sub">${esc(i.description)}</div></td>
           <td>${esc(featureName(i.featureId))}</td>
-          <td>${i.allClients ? `<span class="pill">Tous les clients</span>` : i.clientIds.map((id) => esc(clientName(id))).join("<br>") || untriagedTag(i)}</td>
+          <td>${i.allClients ? `<span class="pill">Tous les clients</span>` : i.clientIds.map((id) => esc(clientName(id))).join("<br>") || untriagedTag(i)}${stepNote(i)}</td>
           <td><select class="sev sev-${esc(i.severity)}" data-field="severity" aria-label="Gravité">${options(SEVERITIES, i.severity)}</select></td>
           <td><select data-field="state" aria-label="État">${options(ISSUE_STATES, i.state)}</select></td>
           <td><button class="icon" data-delete="issues" title="Supprimer">✕</button></td>
@@ -154,6 +157,19 @@ function renderProduct() {
     .map((c) => `<label><input type="checkbox" name="clientIds" value="${esc(c.id)}"${checked.has(c.id) ? " checked" : ""}> ${esc(c.name)}</label>`)
     .join("");
   syncAllClients();
+
+  // Étape concernée (facultatif), regroupée par client ; la choisir relie aussi son client côté serveur.
+  const chosen = form.elements.milestoneId.value;
+  form.elements.milestoneId.innerHTML =
+    `<option value="">— Aucune —</option>` +
+    state.clients
+      .map((c) => {
+        const steps = state.milestones.filter((m) => m.clientId === c.id);
+        return steps.length
+          ? `<optgroup label="${esc(c.name)}">${steps.map((m) => `<option value="${esc(m.id)}"${m.id === chosen ? " selected" : ""}>${esc(m.name)}</option>`).join("")}</optgroup>`
+          : "";
+      })
+      .join("");
 }
 
 // « Tous les clients » remplace la sélection individuelle : on grise les cases des clients.
@@ -211,7 +227,7 @@ function renderImplementation() {
         .map(
           (i) => `<li class="${i.state === "Résolu" ? "resolved" : ""}">
         <span class="sev sev-${esc(i.severity)}">${esc(i.severity)}</span>
-        <span>${esc(i.title)}${isUntriagedCritical(i) ? ` ${untriagedTag(i)}` : ""}</span>
+        <span>${esc(i.title)}${isUntriagedCritical(i) ? ` ${untriagedTag(i)}` : ""}${milestoneName(i.milestoneId) && affects(i, client.id) ? ` <span class="muted">· étape « ${esc(milestoneName(i.milestoneId))} »</span>` : ""}</span>
         <span class="pill">${esc(i.state)}</span>
       </li>`
         )

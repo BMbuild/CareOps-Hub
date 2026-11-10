@@ -32,7 +32,9 @@ CREATE TABLE IF NOT EXISTS issues (
     feature_id   TEXT REFERENCES features(id) ON DELETE SET NULL,
     created_at   TEXT NOT NULL,
     -- 1 = touche tous les clients, y compris ceux ajoutés plus tard (issue_clients reste vide).
-    all_clients  INTEGER NOT NULL DEFAULT 0 CHECK (all_clients IN (0, 1))
+    all_clients  INTEGER NOT NULL DEFAULT 0 CHECK (all_clients IN (0, 1)),
+    -- Étape retardée par le problème (facultatif). Son client est toujours ajouté aux clients touchés.
+    milestone_id TEXT REFERENCES milestones(id) ON DELETE SET NULL
 );
 -- Un problème peut toucher plusieurs clients : c'est ce lien qui alimente la préparation.
 CREATE TABLE IF NOT EXISTS issue_clients (
@@ -55,7 +57,7 @@ CREATE TABLE IF NOT EXISTS milestones (
 COLUMNS = {
     "clients": {"name": "name", "goLiveDate": "go_live_date"},
     "features": {"name": "name", "description": "description", "status": "status"},
-    "issues": {"title": "title", "description": "description", "severity": "severity", "state": "state", "featureId": "feature_id", "allClients": "all_clients"},
+    "issues": {"title": "title", "description": "description", "severity": "severity", "state": "state", "featureId": "feature_id", "allClients": "all_clients", "milestoneId": "milestone_id"},
     "milestones": {"clientId": "client_id", "name": "name", "dueDate": "due_date", "owner": "owner", "status": "status", "blocker": "blocker"},
 }
 
@@ -86,6 +88,9 @@ def init_db() -> None:
         # Base créée avant l'option « Tous les clients » : on ajoute la colonne.
         if "all_clients" not in {r["name"] for r in conn.execute("PRAGMA table_info(issues)")}:
             conn.execute("ALTER TABLE issues ADD COLUMN all_clients INTEGER NOT NULL DEFAULT 0 CHECK (all_clients IN (0, 1))")
+        # Base créée avant le lien vers une étape : on ajoute la colonne.
+        if "milestone_id" not in {r["name"] for r in conn.execute("PRAGMA table_info(issues)")}:
+            conn.execute("ALTER TABLE issues ADD COLUMN milestone_id TEXT REFERENCES milestones(id) ON DELETE SET NULL")
         if conn.execute("SELECT COUNT(*) FROM clients").fetchone()[0] == 0:
             _seed(conn)
 
@@ -122,7 +127,7 @@ def _client_ids(values: dict) -> list[str]:
 
 def _sql_value(field: str, value):
     # Une fonctionnalité absente est stockée en NULL pour respecter la clé étrangère.
-    if field == "featureId":
+    if field in ("featureId", "milestoneId"):
         return value or None
     if field == "allClients":
         return int(bool(value))
@@ -208,6 +213,13 @@ def _check_refs(conn, collection: str, values: dict) -> None:
         raise InvalidReference("Client inconnu.")
     if collection == "issues" and values.get("featureId") and not conn.execute("SELECT 1 FROM features WHERE id = ?", (values["featureId"],)).fetchone():
         raise InvalidReference("Fonctionnalité inconnue.")
+    if collection == "issues" and values.get("milestoneId"):
+        row = conn.execute("SELECT client_id FROM milestones WHERE id = ?", (values["milestoneId"],)).fetchone()
+        if not row:
+            raise InvalidReference("Étape inconnue.")
+        # Lier une étape lie aussi son client : c'est le client qui porte le blocage.
+        if not values.get("allClients") and row["client_id"] not in (values.get("clientIds") or []):
+            values["clientIds"] = [*(values.get("clientIds") or []), row["client_id"]]
     # Un problème peut n'être lié à aucun client (« À trier ») : voir readiness.untriaged_critical.
     # Les clients indiqués, eux, doivent exister.
     ids = list(dict.fromkeys(_client_ids(values) or [])) if collection == "issues" else []

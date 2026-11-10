@@ -75,6 +75,7 @@ The platform surfaces blockers and calculates implementation readiness using det
 - Update issue status: Open, In Progress, Resolved
 - Associate issues with features
 - Link issues to the affected clients, to **All clients**, or leave them **To triage**
+- Optionally link an issue to the milestone it delays (its client is linked automatically)
 
 ### Implementation Workspace (Sarah)
 
@@ -109,7 +110,7 @@ Defaults: severity Medium, status Open. Any other value is rejected by the API (
 
 **Not Ready** when an unresolved Critical issue affects the client, OR a milestone is Blocked. A milestone can only be set to Blocked with its cause written (enforced by the API, HTTP 400 otherwise), so the reason shown always says what to unblock. An unresolved Critical issue affects:
 
-- the clients it is linked to;
+- the clients it is linked to (linking a milestone links its client, and the reason names the milestone);
 - every client, when it is marked **All clients** or linked to no client yet (**To triage**, see [below](#untriaged-issues-fail-safe)).
 
 An open Critical issue therefore always blocks at least one client. Medium and Low issues never block.
@@ -345,6 +346,19 @@ Brahim and Sarah run this workflow with a fictional healthcare client before mer
 
 **Step 7, corrected.** The first version of this plan expected a general Critical issue to stay visible *without* blocking. That would let a client go live while a Critical issue waits for triage, which breaks the core promise. We kept the fail-safe rule: when the scope is unknown, the issue blocks everyone. "Without affecting other implementations" applies to issues linked to clients.
 
+### Milestone link test (November 10, 2026)
+
+An issue can now point to the milestone it delays. Client A = Bien-Être Queens (all milestones Completed), client B = CareFirst Brooklyn. Pass criterion: all four pass without changing readiness by hand.
+
+| # | Test | Result |
+| --- | --- | --- |
+| 1 | Open Critical issue linked to A's milestone "Test EVV avec l'État" | A Not Ready, reason "Export EVV refusé, étape « Test EVV avec l'État »"; the issue is linked to A automatically ✅ |
+| 2 | Client B | Unchanged (At Risk, for its own late milestone) ✅ |
+| 3 | Issue resolved | A Ready again ✅ |
+| 4 | Page refreshed | Issue, milestone link and readiness preserved ✅ |
+
+Run in the browser and as automated tests (`test_probleme_lie_a_une_etape_plan_en_quatre_tests`). Deleting the milestone keeps the issue linked to the client, so the block does not disappear; an unknown milestone is rejected (400).
+
 **Still to do:** rerun the plan with Sarah driving the Implementation workspace on `main`. The 2026-11-05 run was done by Brahim alone.
 
 ## Non-Goals
@@ -391,7 +405,7 @@ Agreed by Brahim and Sarah on November 10, 2026. They replace the original plan 
 
 | Topic | Decision | Why |
 | --- | --- | --- |
-| What an issue is linked to | One or more clients, or **All clients** (including clients added later) | One issue often affects several clients; no duplicates |
+| What an issue is linked to | One or more clients, or **All clients** (including clients added later); optionally the milestone it delays | One issue often affects several clients; no duplicates. The milestone shows *what* the issue holds back; blocking still goes through the client |
 | Readiness states | Not Ready, At Risk, In Progress, Ready, always with a reason in French | More useful than Ready / Not Ready alone |
 | Incomplete milestone | In Progress; a late milestone makes the client At Risk; only a Blocked milestone makes it Not Ready | Unfinished work is not a crisis |
 | Critical issue with no link | Fail-safe: it blocks every client until triaged; Medium and Low issues never block | A Critical issue must never drop out of readiness because it is not linked yet |

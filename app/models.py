@@ -41,6 +41,7 @@ class Issue(Base):
     featureId: str = ""
     clientIds: list[str] = []
     allClients: bool = False  # touche tous les clients, y compris ceux ajoutés plus tard
+    milestoneId: str = ""  # étape retardée (facultatif) ; son client est ajouté aux clients touchés
 
 
 class Milestone(Base):

@@ -266,3 +266,65 @@ def test_api_signale_le_retard_de_tri():
         client.put(f"/api/issues/{old['id']}", json={"clientIds": ["c1"]})  # trié
         issues = client.get("/api/state").json()["issues"]
         assert next(i for i in issues if i["id"] == old["id"])["overdueForTriage"] is False
+
+
+def test_probleme_lie_a_une_etape_plan_en_quatre_tests():
+    """Plan du 10 novembre : un Critique lié à une étape du client A bloque A, pas B ; résolu, A redevient Prêt ; tout persiste."""
+    def readiness(client):
+        return client.get("/api/state").json()["readiness"]
+
+    with TestClient(app) as client:
+        # Client A = Bien-Être Queens (c3, toutes étapes terminées) ; client B = CareFirst Brooklyn (c2).
+        before_b = readiness(client)["c2"]
+        assert readiness(client)["c3"]["status"] == "Prêt"
+
+        # Test 1 : Critique ouvert lié à l'étape « Test EVV avec l'État » (m10) de A → A Non prêt, étape nommée.
+        issue = client.post("/api/issues", json={"title": "Export EVV refusé", "severity": "Critique", "milestoneId": "m10"}).json()
+        assert issue["milestoneId"] == "m10"
+        assert issue["clientIds"] == ["c3"]  # l'étape relie automatiquement son client
+        a = readiness(client)["c3"]
+        assert a["status"] == "Non prêt"
+        assert "Export EVV refusé, étape « Test EVV avec l'État »" in a["reasons"][0]
+
+        # Test 2 : B ne change pas.
+        assert readiness(client)["c2"] == before_b
+
+        # Test 3 : résolu → A Prêt (toutes ses étapes sont terminées).
+        client.put(f"/api/issues/{issue['id']}", json={"state": "Résolu"})
+        assert readiness(client)["c3"]["status"] == "Prêt"
+        client.put(f"/api/issues/{issue['id']}", json={"state": "Ouvert"})
+
+    # Test 4 : après « actualisation » (nouveau démarrage), problème, lien d'étape et états sont conservés.
+    with TestClient(app) as client:
+        saved = next(i for i in client.get("/api/issues").json() if i["id"] == issue["id"])
+        assert (saved["milestoneId"], saved["clientIds"], saved["state"]) == ("m10", ["c3"], "Ouvert")
+        assert readiness(client)["c3"]["status"] == "Non prêt"
+        assert readiness(client)["c2"] == before_b
+
+
+def test_lien_etape_invalide_ou_supprimee():
+    with TestClient(app) as client:
+        res = client.post("/api/issues", json={"title": "X", "severity": "Critique", "milestoneId": "inconnue"})
+        assert res.status_code == 400
+        assert res.json()["error"] == "Étape inconnue."
+
+        # Supprimer l'étape ne fait pas disparaître le blocage : le problème reste lié au client.
+        step = client.post("/api/milestones", json={"clientId": "c3", "name": "Audit"}).json()
+        client.put(f"/api/milestones/{step['id']}", json={"status": "Terminé"})
+        issue = client.post("/api/issues", json={"title": "Audit bloqué", "severity": "Critique", "milestoneId": step["id"]}).json()
+        assert client.delete(f"/api/milestones/{step['id']}").status_code == 204
+        saved = next(i for i in client.get("/api/issues").json() if i["id"] == issue["id"])
+        assert (saved["milestoneId"], saved["clientIds"]) == ("", ["c3"])
+        assert client.get("/api/state").json()["readiness"]["c3"]["status"] == "Non prêt"
+
+
+def test_ancienne_base_sans_colonne_milestone_id_est_migree(tmp_path, monkeypatch):
+    path = tmp_path / "ancienne.db"
+    monkeypatch.setenv("CAREOPS_DB", str(path))
+    old_schema = db.SCHEMA.replace(
+        ",\n    -- Étape retardée par le problème (facultatif). Son client est toujours ajouté aux clients touchés.\n    milestone_id TEXT REFERENCES milestones(id) ON DELETE SET NULL", "")
+    assert "milestone_id" not in old_schema
+    with sqlite3.connect(path) as conn:
+        conn.executescript(old_schema)
+    db.init_db()
+    assert all(i["milestoneId"] == "" for i in db.load_state()["issues"])

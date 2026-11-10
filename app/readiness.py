@@ -28,6 +28,12 @@ def affects(issue: dict, client_id: str) -> bool:
     return issue.get("allClients", False) or client_id in issue["clientIds"]
 
 
+def _issue_names(issues: list[dict], milestones: list[dict]) -> str:
+    """Titres des problèmes, avec l'étape qu'ils retardent quand elle appartient à ce client."""
+    steps = {m["id"]: m["name"] for m in milestones}
+    return ", ".join(f"{i['title']}, étape « {steps[i['milestoneId']]} »" if i.get("milestoneId") in steps else i["title"] for i in issues)
+
+
 def untriaged_critical(state: dict) -> list[dict]:
     """Critiques ouverts liés à aucun client (« À trier »).
 
@@ -66,7 +72,7 @@ def compute_readiness(client: dict, state: dict, today: str) -> dict:
         reasons = []
         if critical:
             s = "s" if len(critical) > 1 else ""
-            reasons.append(f"{len(critical)} problème{s} critique{s} ouvert{s} ({_names(critical, 'title')})")
+            reasons.append(f"{len(critical)} problème{s} critique{s} ouvert{s} ({_issue_names(critical, milestones)})")
         if blocked:
             s = "s" if len(blocked) > 1 else ""
             reasons.append(f"{len(blocked)} étape{s} bloquée{s} ({_names(blocked, 'name')})")

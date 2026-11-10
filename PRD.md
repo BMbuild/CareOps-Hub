@@ -69,7 +69,7 @@ Brahim et Sarah écrivent dans la même source ; l'état de préparation est rec
 ### Espace Produit (Brahim)
 
 - **P1** : Créer, modifier et supprimer une fonctionnalité (nom, description, statut).
-- **P2** : Créer un problème technique lié à une fonctionnalité et à un ou plusieurs clients, à « Tous les clients », ou à aucun client s'il reste à trier (« À trier »).
+- **P2** : Créer un problème technique lié à une fonctionnalité et à un ou plusieurs clients, à « Tous les clients », ou à aucun client s'il reste à trier (« À trier »). Facultatif : l'étape qu'il retarde (son client est alors relié automatiquement).
 - **P3** : Donner à chaque problème une gravité : Critique, Moyenne, Faible (hypothèse à valider, voir README).
 - **P4** : Suivre l'état de résolution : Ouvert, En cours, Résolu.
 - **P5** : Filtrer les problèmes par gravité, état et client.
@@ -113,7 +113,7 @@ Cinq objets suffisent. Le lien clé est `Problème.clients` : c'est lui qui fait
 | --- | --- | --- |
 | Client | id, nom, date de go-live | Sarah |
 | Fonctionnalité | id, nom, description, statut | Brahim |
-| Problème | id, titre, description, gravité, état, fonctionnalité, clients (liste, peut être vide), tous les clients (oui/non), date de création | Brahim |
+| Problème | id, titre, description, gravité, état, fonctionnalité, clients (liste, peut être vide), tous les clients (oui/non), étape retardée (facultatif), date de création | Brahim |
 | Étape | id, client, nom, échéance, responsable, statut, blocage (texte) | Sarah |
 | État de préparation | calculé à la volée, jamais stocké : statut + liste des raisons | Personne (automatique) |
 
