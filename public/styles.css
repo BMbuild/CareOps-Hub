@@ -152,6 +152,7 @@ table input { min-width: 9rem; }
 .s-not-ready .pill, .pill.s-not-ready { background: var(--red-soft); color: var(--red); }
 .s-at-risk .pill, .pill.s-at-risk { background: var(--orange-soft); color: var(--orange); }
 .s-ready .pill, .pill.s-ready { background: var(--green-soft); color: var(--green); }
+.pill-overdue { background: #f3e5f5; color: #7b1fa2; border: 1px solid #ce93d8; }
 
 .sev { font-weight: 600; }
 .sev-Critique { color: var(--red); }
