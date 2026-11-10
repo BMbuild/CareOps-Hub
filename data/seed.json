@@ -19,6 +19,7 @@
       "state": "Ouvert",
       "featureId": "f1",
       "clientIds": ["c1"],
+      "milestoneId": "m3",
       "createdAt": "2026-10-28"
     },
     {

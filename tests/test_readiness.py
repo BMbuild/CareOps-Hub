@@ -48,7 +48,7 @@ def test_raisons_au_pluriel():
 
 
 def test_en_retard_de_tri():
-    """Signal de Sarah : un Critique ouvert sans client, créé avant aujourd'hui, est en retard de tri."""
+    """Signal de Sarah : un Critique ouvert sans client, non trié à la fin de son jour ouvré, est en retard de tri."""
     from app.readiness import is_overdue_for_triage
 
     base = {"severity": "Critique", "state": "Ouvert", "clientIds": [], "allClients": False, "createdAt": "2026-11-03"}
@@ -62,3 +62,25 @@ def test_en_retard_de_tri():
         {"createdAt": ""},
     ):
         assert not is_overdue_for_triage({**base, **change}, TODAY), change
+
+
+def test_retard_de_tri_en_jours_ouvres():
+    """Demande de Sarah : un Critique créé le vendredi n'est pas en retard pendant le week-end."""
+    from app.readiness import is_overdue_for_triage
+
+    def overdue(created, today):
+        issue = {"severity": "Critique", "state": "Ouvert", "clientIds": [], "allClients": False, "createdAt": created}
+        return is_overdue_for_triage(issue, today)
+
+    friday, saturday, sunday, monday, tuesday = "2026-11-06", "2026-11-07", "2026-11-08", "2026-11-09", "2026-11-10"
+    assert not overdue(friday, friday)
+    assert not overdue(friday, saturday)
+    assert not overdue(friday, sunday)
+    assert overdue(friday, monday)  # pas trié vendredi : en retard le jour ouvré suivant
+    # Créé le week-end : à trier le lundi, en retard le mardi.
+    assert not overdue(saturday, monday)
+    assert overdue(saturday, tuesday)
+    assert not overdue(sunday, monday)
+    # En semaine, rien ne change : en retard le lendemain.
+    assert not overdue(monday, monday)
+    assert overdue(monday, tuesday)

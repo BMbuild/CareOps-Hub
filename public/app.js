@@ -254,7 +254,7 @@ function untriagedTag(i) {
     ? `<span class="pill s-not-ready" title="Bloque tous les clients tant qu'il n'est pas relié aux clients touchés">À trier · bloque tous les clients</span>`
     : `<span class="pill">À trier</span>`;
   if (isOverdueForTriage(i)) {
-    return `${baseTag} <span class="pill pill-overdue" title="Non trié depuis plus d'un jour">En retard de triage</span>`;
+    return `${baseTag} <span class="pill pill-overdue" title="Non trié à la fin de son jour ouvré de création">En retard de triage</span>`;
   }
   return baseTag;
 }

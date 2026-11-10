@@ -103,7 +103,8 @@ def reset() -> None:
 
 def _seed(conn: sqlite3.Connection) -> None:
     seed = json.loads(SEED_FILE.read_text(encoding="utf-8"))
-    for collection in ("clients", "features", "issues", "milestones"):
+    # Étapes avant problèmes : un problème peut pointer vers l'étape qu'il retarde.
+    for collection in ("clients", "features", "milestones", "issues"):
         for item in seed[collection]:
             _insert(conn, collection, item["id"], item, created_at=item.get("createdAt"))
 

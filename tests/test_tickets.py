@@ -327,4 +327,41 @@ def test_ancienne_base_sans_colonne_milestone_id_est_migree(tmp_path, monkeypatc
     with sqlite3.connect(path) as conn:
         conn.executescript(old_schema)
     db.init_db()
-    assert all(i["milestoneId"] == "" for i in db.load_state()["issues"])
+    links = {i["id"]: i["milestoneId"] for i in db.load_state()["issues"]}
+    assert links.pop("i1") == "m3"  # données de démo : la colonne ajoutée reçoit bien le lien
+    assert set(links.values()) == {""}
+
+
+def test_demo_de_presentation():
+    """Scénario de la démo (README, « Presentation Demo ») : les deux espaces travaillent ensemble."""
+    with TestClient(app) as client:
+        client.post("/api/reset")
+        readiness = lambda: client.get("/api/state").json()["readiness"]["c3"]
+        assert readiness()["status"] == "Prêt"
+
+        # 1. Sarah ajoute une étape à Bien-Être Queens.
+        step = client.post("/api/milestones", json={
+            "clientId": "c3", "name": "Vérification finale avant go-live",
+            "dueDate": "2099-12-31", "owner": "Sarah", "status": "À faire"}).json()
+        assert readiness()["status"] == "En cours"
+
+        # 2. Brahim crée un Critique et choisit cette étape : le client est relié tout seul.
+        issue = client.post("/api/issues", json={
+            "title": "Pointages en double sur le portail aidants", "severity": "Critique",
+            "featureId": "f4", "milestoneId": step["id"]}).json()
+        assert issue["clientIds"] == ["c3"]
+        # 3. Sarah voit Non prêt, avec le problème et l'étape dans la raison.
+        assert readiness()["status"] == "Non prêt"
+        assert "étape « Vérification finale avant go-live »" in readiness()["reasons"][0]
+
+        # 4. Brahim résout le problème, puis Sarah termine l'étape.
+        client.put(f"/api/issues/{issue['id']}", json={"state": "Résolu"})
+        assert readiness()["status"] == "En cours"
+        client.put(f"/api/milestones/{step['id']}", json={"status": "Terminé"})
+
+    # 5. Après un redémarrage (même base), tout est conservé.
+    with TestClient(app) as client:
+        state = client.get("/api/state").json()
+        assert state["readiness"]["c3"]["status"] == "Prêt"
+        saved = next(i for i in state["issues"] if i["id"] == issue["id"])
+        assert (saved["state"], saved["milestoneId"]) == ("Résolu", step["id"])

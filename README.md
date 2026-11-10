@@ -361,6 +361,25 @@ Run in the browser and as automated tests (`test_probleme_lie_a_une_etape_plan_e
 
 **Still to do:** rerun the plan with Sarah driving the Implementation workspace on `main`. The 2026-11-05 run was done by Brahim alone.
 
+## Presentation Demo
+
+Sarah proposed a fresh demo that shows both workspaces working together. Click **Réinitialiser la démo** first. The demo data then starts in three different states, one per client:
+
+- **Horizon Soins à Domicile: Non prêt.** The reason names the issue and the milestone it delays (Export EVV, step « Test EVV avec l'État »).
+- **CareFirst Brooklyn: À risque.** One milestone is late.
+- **Bien-Être Queens: Prêt.** The walkthrough below starts here.
+
+| Step | Who and where | Action | Expected result |
+| --- | --- | --- | --- |
+| 1 | Sarah, Implementation | Add the milestone « Vérification finale avant go-live » to Bien-Être Queens, due in the coming days | Queens: **En cours** (1 étape restante) |
+| 2 | Brahim, Product | Create a Critical issue « Pointages en double sur le portail aidants », feature Portail aidants, and choose that milestone under **Étape concernée** | Bien-Être Queens is linked automatically |
+| 3 | Sarah, Implementation | Look at Queens | **Non prêt**, and the reason names the issue and the milestone |
+| 4 | Brahim, Product | Set the issue to **Résolu** | Queens: **En cours** (the milestone is still open) |
+| 5 | Sarah, Implementation | Set the milestone to **Terminé** | Queens: **Prêt** |
+| 6 | Both | Refresh the page | Everything is still there |
+
+`test_demo_de_presentation` in `tests/test_tickets.py` runs the same steps against the API.
+
 ## Non-Goals
 
 The MVP does not include:
@@ -409,12 +428,22 @@ Agreed by Brahim and Sarah on November 10, 2026. They replace the original plan 
 | Readiness states | Not Ready, At Risk, In Progress, Ready, always with a reason in French | More useful than Ready / Not Ready alone |
 | Incomplete milestone | In Progress; a late milestone makes the client At Risk; only a Blocked milestone makes it Not Ready | Unfinished work is not a crisis |
 | Critical issue with no link | Fail-safe: it blocks every client until triaged; Medium and Low issues never block | A Critical issue must never drop out of readiness because it is not linked yet |
-| Triage deadline | Same business day; triage identifies the affected clients, only resolving removes the block | Keeps false blocks short |
+| Triage deadline | Same business day (weekends skipped; see the table below); triage identifies the affected clients, only resolving removes the block | Keeps false blocks short |
 | Frontend layout | One page with two tabs | Simpler navigation, no duplicated UI |
 | Data access | Built-in `sqlite3`, no SQLAlchemy | Enough for this scope, no extra dependency |
 | Interface language | French in the interface; code, database columns and identifiers in English | Matches the users; keeps the code maintainable |
 
-Built by Sarah (PR #1, November 10): an open Critical issue still linked to no client and created before today is flagged **En retard de triage** next to **À trier**, in both workspaces. The server computes the flag (`overdueForTriage` in `/api/state`); it counts calendar days, not business days.
+Built by Sarah (PR #1, November 10): an open Critical issue still linked to no client is flagged **En retard de triage** next to **À trier**, in both workspaces. The server computes the flag (`overdueForTriage` in `/api/state`).
+
+**Overdue triage counts business days** (agreed with Sarah, November 10). The deadline is the end of the business day the issue was created; an issue created on a weekend is due on Monday. The flag appears on the next business day, never over a weekend:
+
+| Created | Due by the end of | Flagged from |
+| --- | --- | --- |
+| Monday to Thursday | the same day | the next day |
+| Friday | Friday | Monday |
+| Saturday or Sunday | Monday | Tuesday |
+
+Public holidays are not counted yet.
 
 ## Progress and Next Steps
 
@@ -426,17 +455,18 @@ Built by Sarah (PR #1, November 10): an open Critical issue still linked to no c
 - [x] Readiness rules and both workspaces working on FastAPI + SQLite
 - [x] Three Claude features tested against the live API
 - [x] Layout works on phone width (no horizontal scroll)
-- [x] Fail-safe rule for untriaged Critical issues and the **All clients** option, with tests (26 pass in total)
+- [x] Fail-safe rule for untriaged Critical issues and the **All clients** option, with tests
 - [x] End-to-end test plan run on `main` (9/9 steps)
 - [x] Brahim and Sarah agreed on the [Decisions](#decisions)
+- [x] Overdue triage counts business days; presentation demo scripted and covered by a test (28 pass)
+- [x] Sarah's old branch `Implementation-Workplace` is not needed: its demo data predates the current model
 
 ### Next steps
 
-1. Confirm with Sarah whether she kept demo data from her deleted branch `Implementation-Workplace`; if so, bring it into `main`.
-2. Rerun the end-to-end test plan together, with Sarah driving the Implementation workspace.
-3. Decide whether overdue triage should count business days instead of calendar days.
-4. Prepare the Render deployment (and decide whether production needs PostgreSQL or stays on SQLite).
-5. Run the validation plan for assumption A1 (severity levels) with 2 or 3 testers.
+1. Rehearse the [Presentation Demo](#presentation-demo) together, with Sarah driving the Implementation workspace; it doubles as the end-to-end rerun.
+2. Prepare the Render deployment (and decide whether production needs PostgreSQL or stays on SQLite).
+3. Run the validation plan for assumption A1 (severity levels) with 2 or 3 testers.
+4. Decide whether overdue triage should skip public holidays.
 
 ## License
 

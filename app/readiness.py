@@ -3,6 +3,8 @@
 L'état n'est jamais stocké : il est recalculé à partir des problèmes et des étapes.
 """
 
+from datetime import date, timedelta
+
 # Hypothèse à valider (voir README, « Hypothèses et validation ») : 3 niveaux seulement.
 SEVERITIES = ("Critique", "Moyenne", "Faible")
 ISSUE_STATES = ("Ouvert", "En cours", "Résolu")
@@ -43,11 +45,27 @@ def untriaged_critical(state: dict) -> list[dict]:
     return [i for i in state["issues"] if i["severity"] == "Critique" and i["state"] != "Résolu" and not i["clientIds"] and not i.get("allClients")]
 
 
-def is_overdue_for_triage(issue: dict, today: str) -> bool:
-    """Critique ouvert, toujours sans client, créé avant aujourd'hui.
+def _next_business_day(day: date) -> date:
+    day += timedelta(days=1)
+    while day.weekday() >= 5:  # samedi, dimanche
+        day += timedelta(days=1)
+    return day
 
-    Règle d'équipe : un Critique est trié le jour même (jours calendaires ; les jours
-    ouvrés ne sont pas gérés). Le serveur calcule ce signal, l'interface l'affiche.
+
+def triage_deadline(created_at: str) -> date:
+    """Dernier jour pour trier : le jour ouvré de création (lundi si créé le week-end)."""
+    day = date.fromisoformat(created_at)
+    while day.weekday() >= 5:
+        day += timedelta(days=1)
+    return day
+
+
+def is_overdue_for_triage(issue: dict, today: str) -> bool:
+    """Critique ouvert, toujours sans client, après la fin de son jour ouvré de création.
+
+    Règle d'équipe : un Critique est trié le jour ouvré même. Le signal apparaît le jour
+    ouvré suivant : créé le vendredi, il est en retard le lundi, jamais pendant le week-end.
+    Les jours fériés ne sont pas gérés. Le serveur calcule ce signal, l'interface l'affiche.
     """
     if issue["severity"] != "Critique" or issue["state"] == "Résolu":
         return False
@@ -56,7 +74,7 @@ def is_overdue_for_triage(issue: dict, today: str) -> bool:
     created_at = issue.get("createdAt", "")
     if not created_at:
         return False
-    return created_at < today
+    return date.fromisoformat(today) >= _next_business_day(triage_deadline(created_at[:10]))
 
 
 def compute_readiness(client: dict, state: dict, today: str) -> dict:
