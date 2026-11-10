@@ -37,6 +37,18 @@ def untriaged_critical(state: dict) -> list[dict]:
     return [i for i in state["issues"] if i["severity"] == "Critique" and i["state"] != "Résolu" and not i["clientIds"] and not i.get("allClients")]
 
 
+def is_overdue_for_triage(issue: dict, today: str) -> bool:
+    """Vérifie si un problème critique non trié est en retard de triage (> 1 jour)."""
+    if issue["severity"] != "Critique" or issue["state"] == "Résolu":
+        return False
+    if issue["clientIds"] or issue.get("allClients"):
+        return False
+    created_at = issue.get("createdAt", "")
+    if not created_at:
+        return False
+    return created_at < today
+
+
 def compute_readiness(client: dict, state: dict, today: str) -> dict:
     issues = [i for i in state["issues"] if affects(i, client["id"]) and i["state"] != "Résolu"]
     milestones = [m for m in state["milestones"] if m["clientId"] == client["id"]]

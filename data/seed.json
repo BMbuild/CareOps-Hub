@@ -70,6 +70,16 @@
       "featureId": "f4",
       "clientIds": ["c3"],
       "createdAt": "2026-10-15"
+    },
+    {
+      "id": "i7",
+      "title": "Crash lors de l'import massif de patients",
+      "description": "L'application plante lors de l'import de plus de 1000 patients en une seule fois.",
+      "severity": "Critique",
+      "state": "Ouvert",
+      "featureId": "f2",
+      "clientIds": [],
+      "createdAt": "2026-11-08"
     }
   ],
   "milestones": [

@@ -224,14 +224,25 @@ function isUntriagedCritical(i) {
   return i.severity === "Critique" && i.state !== "Résolu" && i.clientIds.length === 0 && !i.allClients;
 }
 
+function isOverdueForTriage(i) {
+  if (!isUntriagedCritical(i)) return false;
+  const createdAt = i.createdAt || "";
+  if (!createdAt) return false;
+  return createdAt < state.today;
+}
+
 function affects(i, clientId) {
   return i.allClients || i.clientIds.includes(clientId);
 }
 
 function untriagedTag(i) {
-  return isUntriagedCritical(i)
+  const baseTag = isUntriagedCritical(i)
     ? `<span class="pill s-not-ready" title="Bloque tous les clients tant qu'il n'est pas relié aux clients touchés">À trier · bloque tous les clients</span>`
     : `<span class="pill">À trier</span>`;
+  if (isOverdueForTriage(i)) {
+    return `${baseTag} <span class="pill pill-overdue" title="Non trié depuis plus d'un jour">En retard de triage</span>`;
+  }
+  return baseTag;
 }
 
 function fillSelect(target, pairs, selected) {
