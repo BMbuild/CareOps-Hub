@@ -84,7 +84,7 @@ The platform surfaces blockers and calculates implementation readiness using det
 - Set milestone due dates
 - Track milestone progress
 - View linked technical issues
-- Identify implementation blockers
+- Identify implementation blockers (a Blocked milestone must state its cause)
 - Display implementation readiness
 
 ## Severity Levels and Statuses
@@ -107,7 +107,7 @@ Defaults: severity Medium, status Open. Any other value is rejected by the API (
 
 ## Readiness Rules
 
-**Not Ready** when an unresolved Critical issue affects the client, OR a milestone is Blocked. An unresolved Critical issue affects:
+**Not Ready** when an unresolved Critical issue affects the client, OR a milestone is Blocked. A milestone can only be set to Blocked with its cause written (enforced by the API, HTTP 400 otherwise), so the reason shown always says what to unblock. An unresolved Critical issue affects:
 
 - the clients it is linked to;
 - every client, when it is marked **All clients** or linked to no client yet (**To triage**, see [below](#untriaged-issues-fail-safe)).

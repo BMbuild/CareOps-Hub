@@ -285,8 +285,22 @@ for (const [table, collection] of [["#issues-table", "issues"], ["#features-tabl
     const id = e.target.closest("tr")?.dataset.id;
     if (!field || !id) return;
     e.target.blur();
-    // Si le serveur refuse (ex. Critique sans client), on réaffiche la valeur enregistrée.
-    mutate("PUT", `/api/${collection}/${id}`, { [field]: e.target.value }, "Enregistré").then((ok) => ok || refresh(true));
+    const body = { [field]: e.target.value };
+    // Une étape Bloquée doit avoir une cause : on la demande si le champ est vide.
+    if (collection === "milestones" && field === "status" && e.target.value === "Bloqué") {
+      const current = e.target.closest("tr").querySelector('[data-field="blocker"]')?.value.trim();
+      if (!current) {
+        const cause = prompt("Quelle est la cause du blocage ?")?.trim();
+        if (!cause) {
+          toast("Étape non bloquée : une cause est obligatoire.", true);
+          refresh(true);
+          return;
+        }
+        body.blocker = cause;
+      }
+    }
+    // Si le serveur refuse (ex. Critique sans client, étape bloquée sans cause), on réaffiche la valeur enregistrée.
+    mutate("PUT", `/api/${collection}/${id}`, body, "Enregistré").then((ok) => ok || refresh(true));
   });
   el.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-delete]");
@@ -320,7 +334,13 @@ $("#feature-form").addEventListener("submit", async (e) => {
 
 $("#milestone-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (await mutate("POST", "/api/milestones", { ...formData(e.target), clientId: selectedClientId }, "Étape ajoutée")) e.target.reset();
+  const body = { ...formData(e.target), clientId: selectedClientId };
+  if (body.status === "Bloqué" && !body.blocker?.trim()) {
+    toast("Une étape bloquée doit avoir une cause : décrivez le point de blocage.", true);
+    e.target.elements.blocker.focus();
+    return;
+  }
+  if (await mutate("POST", "/api/milestones", body, "Étape ajoutée")) e.target.reset();
 });
 
 $("#client-form").addEventListener("submit", async (e) => {

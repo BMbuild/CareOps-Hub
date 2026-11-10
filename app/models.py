@@ -5,12 +5,14 @@ Les noms de champs restent en camelCase pour correspondre au JavaScript du front
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 Severity = Literal["Critique", "Moyenne", "Faible"]
 IssueState = Literal["Ouvert", "En cours", "Résolu"]
 MilestoneState = Literal["À faire", "En cours", "Terminé", "Bloqué"]
 FeatureState = Literal["Planifiée", "En développement", "Livrée"]
+
+BLOCKER_REQUIRED = "Une étape bloquée doit avoir une cause : décrivez le point de blocage."
 
 # Date ISO (AAAA-MM-JJ) ou vide.
 OptionalDate = Field("", pattern=r"^(\d{4}-\d{2}-\d{2})?$")
@@ -48,6 +50,13 @@ class Milestone(Base):
     owner: str = Field("", max_length=80)
     status: MilestoneState = "À faire"
     blocker: str = Field("", max_length=1000)
+
+    @model_validator(mode="after")
+    def blocked_needs_cause(self):
+        # Une étape Bloquée rend le client « Non prêt » : la cause doit être écrite pour savoir quoi débloquer.
+        if self.status == "Bloqué" and not self.blocker:
+            raise ValueError(BLOCKER_REQUIRED)
+        return self
 
 
 MODELS: dict[str, type[Base]] = {

@@ -78,7 +78,7 @@ Brahim et Sarah écrivent dans la même source ; l'état de préparation est rec
 
 - **I1** : Créer un projet d'implémentation par client, avec une date de go-live.
 - **I2** : Ajouter des étapes clés avec échéance, responsable et statut (À faire, En cours, Terminé, Bloqué).
-- **I3** : Noter un point de blocage sur une étape, avec sa cause.
+- **I3** : Noter un point de blocage sur une étape, avec sa cause (obligatoire quand l'étape est Bloquée).
 - **I4** : Voir les problèmes techniques qui touchent ce client, en lecture seule.
 - **I5** : Signaler une étape en retard quand l'échéance est dépassée.
 

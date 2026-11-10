@@ -61,6 +61,9 @@ def validate(collection: str, body: dict) -> dict:
         return MODELS[collection].model_validate(body).model_dump()
     except ValidationError as e:
         first = e.errors()[0]
+        if not first["loc"] and first["type"] == "value_error":
+            # Règle qui porte sur plusieurs champs (ex. étape bloquée sans cause) : son message suffit.
+            raise ApiError(400, str(first["ctx"]["error"])) from e
         field = ".".join(str(p) for p in first["loc"]) or "corps"
         raise ApiError(400, f"Champ « {field} » invalide : {first['msg']}") from e
 

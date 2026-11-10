@@ -224,3 +224,27 @@ def test_ancienne_base_sans_colonne_all_clients_est_migree(tmp_path, monkeypatch
         conn.executescript(old_schema)
     db.init_db()
     assert all(i["allClients"] is False for i in db.load_state()["issues"])
+
+
+def test_etape_bloquee_exige_une_cause():
+    """Une étape Bloquée rend le client « Non prêt » : sa cause doit être écrite, à la création comme en modification."""
+    with TestClient(app) as client:
+        expected = "Une étape bloquée doit avoir une cause : décrivez le point de blocage."
+        for blocker in ("", "   "):
+            res = client.post("/api/milestones", json={"clientId": "c3", "name": "Formation", "status": "Bloqué", "blocker": blocker})
+            assert res.status_code == 400
+            assert res.json()["error"] == expected
+        assert client.get("/api/state").json()["readiness"]["c3"]["status"] == "Prêt"  # rien n'a été enregistré
+
+        step = client.post("/api/milestones", json={"clientId": "c3", "name": "Formation", "status": "Terminé"}).json()
+        assert client.put(f"/api/milestones/{step['id']}", json={"status": "Bloqué"}).status_code == 400
+
+        res = client.put(f"/api/milestones/{step['id']}", json={"status": "Bloqué", "blocker": "Accès VPN refusé par le client"})
+        assert res.status_code == 200
+        r = client.get("/api/state").json()["readiness"]["c3"]
+        assert r["status"] == "Non prêt"
+        assert "Formation" in r["reasons"][0]
+
+        # Effacer la cause d'une étape encore bloquée est refusé ; débloquer sans cause est permis.
+        assert client.put(f"/api/milestones/{step['id']}", json={"blocker": ""}).status_code == 400
+        assert client.put(f"/api/milestones/{step['id']}", json={"status": "Terminé", "blocker": ""}).status_code == 200
