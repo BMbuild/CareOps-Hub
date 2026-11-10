@@ -400,7 +400,7 @@ Agreed by Brahim and Sarah on November 10, 2026. They replace the original plan 
 | Data access | Built-in `sqlite3`, no SQLAlchemy | Enough for this scope, no extra dependency |
 | Interface language | French in the interface; code, database columns and identifiers in English | Matches the users; keeps the code maintainable |
 
-Proposed by Sarah, not built yet: flag a Critical issue as **overdue for triage** once the same-day deadline passes.
+Built by Sarah (PR #1, November 10): an open Critical issue still linked to no client and created before today is flagged **En retard de triage** next to **À trier**, in both workspaces. The server computes the flag (`overdueForTriage` in `/api/state`); it counts calendar days, not business days.
 
 ## Progress and Next Steps
 
@@ -420,7 +420,7 @@ Proposed by Sarah, not built yet: flag a Critical issue as **overdue for triage*
 
 1. Decide with Sarah what to keep from her branch `Implementation-Workplace` (for example her demo data), bring it into `main`, then archive the branch.
 2. Rerun the end-to-end test plan together, with Sarah driving the Implementation workspace.
-3. Decide whether to build the **overdue for triage** flag proposed by Sarah.
+3. Decide whether overdue triage should count business days instead of calendar days.
 4. Prepare the Render deployment (and decide whether production needs PostgreSQL or stays on SQLite).
 5. Run the validation plan for assumption A1 (severity levels) with 2 or 3 testers.
 
