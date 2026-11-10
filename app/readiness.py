@@ -38,7 +38,11 @@ def untriaged_critical(state: dict) -> list[dict]:
 
 
 def is_overdue_for_triage(issue: dict, today: str) -> bool:
-    """Vérifie si un problème critique non trié est en retard de triage (> 1 jour)."""
+    """Critique ouvert, toujours sans client, créé avant aujourd'hui.
+
+    Règle d'équipe : un Critique est trié le jour même (jours calendaires ; les jours
+    ouvrés ne sont pas gérés). Le serveur calcule ce signal, l'interface l'affiche.
+    """
     if issue["severity"] != "Critique" or issue["state"] == "Résolu":
         return False
     if issue["clientIds"] or issue.get("allClients"):

@@ -224,11 +224,9 @@ function isUntriagedCritical(i) {
   return i.severity === "Critique" && i.state !== "Résolu" && i.clientIds.length === 0 && !i.allClients;
 }
 
+// Calculé par le serveur (readiness.is_overdue_for_triage) : une seule source pour la règle.
 function isOverdueForTriage(i) {
-  if (!isUntriagedCritical(i)) return false;
-  const createdAt = i.createdAt || "";
-  if (!createdAt) return false;
-  return createdAt < state.today;
+  return Boolean(i.overdueForTriage);
 }
 
 function affects(i, clientId) {

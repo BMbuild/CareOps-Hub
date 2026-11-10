@@ -45,3 +45,20 @@ def test_raisons_au_pluriel():
     client = next(c for c in state["clients"] if c["id"] == "c1")
     reason = compute_readiness(client, state, TODAY)["reasons"][0]
     assert reason.startswith("2 problèmes critiques ouverts")
+
+
+def test_en_retard_de_tri():
+    """Signal de Sarah : un Critique ouvert sans client, créé avant aujourd'hui, est en retard de tri."""
+    from app.readiness import is_overdue_for_triage
+
+    base = {"severity": "Critique", "state": "Ouvert", "clientIds": [], "allClients": False, "createdAt": "2026-11-03"}
+    assert is_overdue_for_triage(base, TODAY)  # créé la veille, toujours sans client
+    for change in (
+        {"createdAt": TODAY},  # créé aujourd'hui : encore dans le délai
+        {"clientIds": ["c1"]},  # trié
+        {"allClients": True},  # trié : touche tout le monde
+        {"state": "Résolu"},
+        {"severity": "Moyenne"},
+        {"createdAt": ""},
+    ):
+        assert not is_overdue_for_triage({**base, **change}, TODAY), change

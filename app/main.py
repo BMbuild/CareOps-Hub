@@ -14,7 +14,7 @@ from pydantic import ValidationError
 
 from . import ai, db
 from .models import MODELS
-from .readiness import compute_all, compute_readiness
+from .readiness import compute_all, compute_readiness, is_overdue_for_triage
 
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
@@ -78,6 +78,8 @@ def check_collection(collection: str) -> None:
 @app.get("/api/state")
 def get_state():
     state = db.load_state()
+    for issue in state["issues"]:
+        issue["overdueForTriage"] = is_overdue_for_triage(issue, today())
     return {**state, "readiness": compute_all(state, today()), "today": today(), "aiEnabled": bool(os.environ.get("ANTHROPIC_API_KEY"))}
 
 

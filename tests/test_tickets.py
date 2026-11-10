@@ -248,3 +248,21 @@ def test_etape_bloquee_exige_une_cause():
         # Effacer la cause d'une étape encore bloquée est refusé ; débloquer sans cause est permis.
         assert client.put(f"/api/milestones/{step['id']}", json={"blocker": ""}).status_code == 400
         assert client.put(f"/api/milestones/{step['id']}", json={"status": "Terminé", "blocker": ""}).status_code == 200
+
+
+def test_api_signale_le_retard_de_tri():
+    """Le serveur calcule le signal ; un Critique non trié de la veille l'a, celui du jour non."""
+    with TestClient(app) as client:
+        old = client.post("/api/issues", json={"title": "Ancien bug", "severity": "Critique"}).json()
+        new = client.post("/api/issues", json={"title": "Nouveau bug", "severity": "Critique"}).json()
+        with sqlite3.connect(db.db_path()) as conn:
+            conn.execute("UPDATE issues SET created_at = '2000-01-01' WHERE id = ?", (old["id"],))
+
+        flags = {i["id"]: i["overdueForTriage"] for i in client.get("/api/state").json()["issues"]}
+        assert flags[old["id"]] is True
+        assert flags[new["id"]] is False
+        assert not any(flags[i] for i in flags if i not in (old["id"], new["id"]))  # données de démo : aucun
+
+        client.put(f"/api/issues/{old['id']}", json={"clientIds": ["c1"]})  # trié
+        issues = client.get("/api/state").json()["issues"]
+        assert next(i for i in issues if i["id"] == old["id"])["overdueForTriage"] is False
