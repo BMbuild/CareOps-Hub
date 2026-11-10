@@ -242,7 +242,7 @@ CAREOPS_TZ=America/New_York
 # CAREOPS_HOLIDAYS=2026-11-26,2026-12-25
 ```
 
-Without a key the application works normally; only the Claude buttons return an error. `CAREOPS_TZ` sets the time zone used for "today" and for issue creation dates, whatever the server's own time zone (Render runs in UTC). `CAREOPS_HOLIDAYS` sets the holidays skipped by the triage deadline: unset means US federal holidays, empty means none (only weekends are skipped), and a comma-separated list of `YYYY-MM-DD` dates means only those days. An invalid date stops the server at startup with a clear message. `DATABASE_URL` will be added when we move to PostgreSQL.
+Without a key the application works normally; only the Claude buttons return an error. `CAREOPS_TZ` sets the time zone used for "today" and for issue creation dates, whatever the server's own time zone (Render runs in UTC). `CAREOPS_HOLIDAYS` sets the holidays skipped by the triage deadline: unset means US federal holidays, empty means none (only weekends are skipped), and a comma-separated list of `YYYY-MM-DD` dates means only those days. An invalid date stops the server at startup with a clear message. The active setting is visible: `/api/state` returns it as `triageCalendar`, and the **En retard de triage** tooltip states it (for example "week-ends et jours fériés fédéraux US exclus ; dates à l'heure de America/New_York"), so two machines set differently are easy to spot. `DATABASE_URL` will be added when we move to PostgreSQL.
 
 ## Security
 
@@ -453,7 +453,7 @@ Built by Sarah (PR #1, November 10): an open Critical issue still linked to no c
 - **Holidays:** by default, US federal holidays (observed dates) for 2026 and 2027, listed in `app/business_days.py`. The deadline should follow the calendar of whoever triages, so this is a setting, not code: if the agency works on federal holidays and expects triage that day, set `CAREOPS_HOLIDAYS=` (empty) and only weekends are skipped; if it closes on a few days only, list them. Still to confirm with Sarah.
 - **Time zone:** dates use the agency's time zone (`CAREOPS_TZ`, default `America/New_York`), not the server's. An issue created at 11:59 p.m. in New York is dated that day, even on a UTC server, and a Thursday issue is not flagged at 7 p.m. New York time just because it is already Friday in UTC.
 
-Tests: `test_retard_de_tri_en_jours_ouvres`, `test_retard_de_tri_saute_les_jours_feries`, `test_dates_dans_le_fuseau_de_l_agence`, `test_api_date_les_problemes_dans_le_fuseau_de_l_agence`, `test_jours_feries_reglables`.
+Tests: `test_retard_de_tri_en_jours_ouvres`, `test_retard_de_tri_saute_les_jours_feries`, `test_dates_dans_le_fuseau_de_l_agence`, `test_api_date_les_problemes_dans_le_fuseau_de_l_agence`, `test_jours_feries_reglables`, `test_api_affiche_le_calendrier_de_tri_actif`.
 
 ## Progress and Next Steps
 
@@ -468,7 +468,7 @@ Tests: `test_retard_de_tri_en_jours_ouvres`, `test_retard_de_tri_saute_les_jours
 - [x] Fail-safe rule for untriaged Critical issues and the **All clients** option, with tests
 - [x] End-to-end test plan run on `main` (9/9 steps)
 - [x] Brahim and Sarah agreed on the [Decisions](#decisions)
-- [x] Overdue triage counts business days, skips US federal holidays and uses the agency's time zone, holidays configurable with `CAREOPS_HOLIDAYS`; presentation demo scripted and covered by a test (32 pass)
+- [x] Overdue triage counts business days, skips US federal holidays and uses the agency's time zone, holidays configurable with `CAREOPS_HOLIDAYS`; active setting shown in the API and the overdue tooltip; presentation demo scripted and covered by a test (33 pass)
 - [x] Sarah's old branch `Implementation-Workplace` is not needed: its demo data predates the current model
 
 ### Next steps

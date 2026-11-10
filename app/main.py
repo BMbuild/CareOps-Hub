@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
 from . import ai, db
-from .business_days import holidays, local_today
+from .business_days import holidays, local_today, triage_calendar
 from .models import MODELS
 from .readiness import compute_all, compute_readiness, is_overdue_for_triage
 
@@ -81,7 +81,7 @@ def get_state():
     state = db.load_state()
     for issue in state["issues"]:
         issue["overdueForTriage"] = is_overdue_for_triage(issue, today())
-    return {**state, "readiness": compute_all(state, today()), "today": today(), "aiEnabled": bool(os.environ.get("ANTHROPIC_API_KEY"))}
+    return {**state, "readiness": compute_all(state, today()), "today": today(), "triageCalendar": triage_calendar(), "aiEnabled": bool(os.environ.get("ANTHROPIC_API_KEY"))}
 
 
 @app.post("/api/reset")

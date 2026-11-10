@@ -245,6 +245,13 @@ function isOverdueForTriage(i) {
   return Boolean(i.overdueForTriage);
 }
 
+// Règle active envoyée par le serveur (CAREOPS_HOLIDAYS, CAREOPS_TZ) : la même sur tous les postes.
+function overdueRule() {
+  const calendar = state.triageCalendar;
+  const rule = "Non trié à la fin de son jour ouvré de création";
+  return calendar ? `${rule} (${calendar.label})` : rule;
+}
+
 function affects(i, clientId) {
   return i.allClients || i.clientIds.includes(clientId);
 }
@@ -254,7 +261,7 @@ function untriagedTag(i) {
     ? `<span class="pill s-not-ready" title="Bloque tous les clients tant qu'il n'est pas relié aux clients touchés">À trier · bloque tous les clients</span>`
     : `<span class="pill">À trier</span>`;
   if (isOverdueForTriage(i)) {
-    return `${baseTag} <span class="pill pill-overdue" title="Non trié à la fin de son jour ouvré de création">En retard de triage</span>`;
+    return `${baseTag} <span class="pill pill-overdue" title="${overdueRule()}">En retard de triage</span>`;
   }
   return baseTag;
 }

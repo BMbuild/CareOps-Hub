@@ -65,3 +65,21 @@ def first_business_day_from(day: date) -> date:
     while not is_business_day(day):
         day += timedelta(days=1)
     return day
+
+
+def triage_calendar() -> dict:
+    """Règle de calendrier active, renvoyée par /api/state : tout le monde voit la même."""
+    raw = os.getenv("CAREOPS_HOLIDAYS")
+    days = holidays()
+    if raw is None:
+        mode, label = "federal", "jours fériés fédéraux US"
+    elif not days:
+        mode, label = "none", "aucun jour férié"
+    else:
+        mode, label = "custom", "jours fériés de l'agence (" + ", ".join(d.isoformat() for d in sorted(days)) + ")"
+    return {
+        "holidays": mode,
+        "holidayDates": sorted(d.isoformat() for d in days),
+        "timeZone": agency_tz().key,
+        "label": f"week-ends et {label} exclus ; dates à l'heure de {agency_tz().key}",
+    }

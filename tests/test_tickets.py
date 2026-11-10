@@ -365,3 +365,27 @@ def test_demo_de_presentation():
         assert state["readiness"]["c3"]["status"] == "Prêt"
         saved = next(i for i in state["issues"] if i["id"] == issue["id"])
         assert (saved["state"], saved["milestoneId"]) == ("Résolu", step["id"])
+
+
+def test_api_affiche_le_calendrier_de_tri_actif(monkeypatch):
+    """Les jours fériés et le fuseau appliqués sont visibles : deux postes réglés différemment se voient."""
+    with TestClient(app) as client:
+        monkeypatch.delenv("CAREOPS_HOLIDAYS", raising=False)
+        monkeypatch.delenv("CAREOPS_TZ", raising=False)
+        calendar = client.get("/api/state").json()["triageCalendar"]
+        assert calendar["holidays"] == "federal"
+        assert "2026-11-26" in calendar["holidayDates"]
+        assert calendar["timeZone"] == "America/New_York"
+        assert "jours fériés fédéraux US" in calendar["label"]
+
+        monkeypatch.setenv("CAREOPS_HOLIDAYS", "")
+        calendar = client.get("/api/state").json()["triageCalendar"]
+        assert (calendar["holidays"], calendar["holidayDates"]) == ("none", [])
+        assert "aucun jour férié" in calendar["label"]
+
+        monkeypatch.setenv("CAREOPS_HOLIDAYS", "2026-12-25,2026-11-26")
+        monkeypatch.setenv("CAREOPS_TZ", "America/Chicago")
+        calendar = client.get("/api/state").json()["triageCalendar"]
+        assert calendar["holidayDates"] == ["2026-11-26", "2026-12-25"]
+        assert calendar["label"] == ("week-ends et jours fériés de l'agence (2026-11-26, 2026-12-25) exclus ; "
+                                     "dates à l'heure de America/Chicago")
