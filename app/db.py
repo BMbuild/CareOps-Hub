@@ -5,7 +5,7 @@ import os
 import sqlite3
 import uuid
 from contextlib import contextmanager
-from datetime import date
+from .business_days import local_today
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -114,7 +114,7 @@ def _insert(conn, collection: str, item_id: str, values: dict, created_at: str |
     row = {col: _sql_value(field, values.get(field, "")) for field, col in cols.items()}
     row["id"] = item_id
     if collection == "issues":
-        row["created_at"] = created_at or date.today().isoformat()
+        row["created_at"] = created_at or local_today()  # fuseau de l'agence
     names = ", ".join(row)
     conn.execute(f"INSERT INTO {collection} ({names}) VALUES ({', '.join('?' * len(row))})", list(row.values()))
     if collection == "issues":

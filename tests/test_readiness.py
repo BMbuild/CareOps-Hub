@@ -84,3 +84,68 @@ def test_retard_de_tri_en_jours_ouvres():
     # En semaine, rien ne change : en retard le lendemain.
     assert not overdue(monday, monday)
     assert overdue(monday, tuesday)
+
+
+def _overdue(created, today):
+    from app.readiness import is_overdue_for_triage
+
+    issue = {"severity": "Critique", "state": "Ouvert", "clientIds": [], "allClients": False, "createdAt": created}
+    return is_overdue_for_triage(issue, today)
+
+
+def test_retard_de_tri_saute_les_jours_feries():
+    # Thanksgiving, jeudi 26 novembre 2026 : créé le mercredi, en retard le vendredi, pas le jeudi.
+    assert not _overdue("2026-11-25", "2026-11-26")
+    assert _overdue("2026-11-25", "2026-11-27")
+    # Créé le jour férié : à trier le vendredi, en retard le lundi.
+    assert not _overdue("2026-11-26", "2026-11-27")
+    assert _overdue("2026-11-26", "2026-11-30")
+    # Vendredi 28 mai 2027, avant le Memorial Day (lundi 31) : en retard le mardi, pas le lundi.
+    assert not _overdue("2027-05-28", "2027-05-29")
+    assert not _overdue("2027-05-28", "2027-05-31")
+    assert _overdue("2027-05-28", "2027-06-01")
+    # Samedi avant ce lundi férié : à trier le mardi, en retard le mercredi.
+    assert not _overdue("2027-05-29", "2027-06-01")
+    assert _overdue("2027-05-29", "2027-06-02")
+
+
+def test_dates_dans_le_fuseau_de_l_agence(monkeypatch):
+    """Le serveur (Render) tourne en UTC ; les dates restent celles de New York."""
+    from datetime import datetime, timezone
+
+    from app.business_days import local_today
+
+    monkeypatch.delenv("CAREOPS_TZ", raising=False)
+    # Jeudi 5 novembre, 23 h 59 à New York = vendredi 6, 04 h 59 UTC : c'est encore jeudi.
+    assert local_today(datetime(2026, 11, 6, 4, 59, tzinfo=timezone.utc)) == "2026-11-05"
+    assert local_today(datetime(2026, 11, 6, 5, 0, tzinfo=timezone.utc)) == "2026-11-06"
+    # Jeudi 19 h à New York (vendredi minuit UTC) : un problème du jeudi matin n'est pas encore en retard.
+    assert not _overdue("2026-11-05", local_today(datetime(2026, 11, 6, 0, 0, tzinfo=timezone.utc)))
+    # Le fuseau se règle avec CAREOPS_TZ.
+    monkeypatch.setenv("CAREOPS_TZ", "UTC")
+    assert local_today(datetime(2026, 11, 6, 4, 59, tzinfo=timezone.utc)) == "2026-11-06"
+
+
+def test_api_date_les_problemes_dans_le_fuseau_de_l_agence(monkeypatch):
+    """La date de création et « aujourd'hui » viennent du même fuseau, pas de celui du serveur."""
+    from datetime import datetime, timezone
+
+    from fastapi.testclient import TestClient
+
+    from app import business_days
+    from app.main import app
+
+    evening_ny = datetime(2026, 11, 6, 0, 30, tzinfo=timezone.utc)  # jeudi 5, 19 h 30 à New York
+    real = business_days.datetime
+
+    class FrozenClock(real):
+        @classmethod
+        def now(cls, tz=None):
+            return evening_ny.astimezone(tz)
+
+    monkeypatch.setattr(business_days, "datetime", FrozenClock)
+    with TestClient(app) as client:
+        issue = client.post("/api/issues", json={"title": "Bug du soir", "severity": "Critique"}).json()
+        assert issue["createdAt"] == "2026-11-05"
+        flags = {i["id"]: i["overdueForTriage"] for i in client.get("/api/state").json()["issues"]}
+        assert flags[issue["id"]] is False

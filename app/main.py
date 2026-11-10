@@ -3,7 +3,6 @@
 import logging
 import os
 from contextlib import asynccontextmanager
-from datetime import date
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -13,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
 from . import ai, db
+from .business_days import local_today
 from .models import MODELS
 from .readiness import compute_all, compute_readiness, is_overdue_for_triage
 
@@ -52,7 +52,7 @@ async def api_error_handler(request: Request, exc: ApiError):
 
 
 def today() -> str:
-    return date.today().isoformat()
+    return local_today()  # fuseau de l'agence, pas celui du serveur
 
 
 def validate(collection: str, body: dict) -> dict:

@@ -195,6 +195,7 @@ careops-hub/
 │   ├── db.py            # SQLite schema, demo data, reads and writes
 │   ├── models.py        # Field validation (Pydantic)
 │   ├── readiness.py     # Deployment readiness rules
+│   ├── business_days.py # Agency time zone, weekends and holidays
 │   └── ai.py            # Claude calls (summary, severity, email)
 ├── public/              # index.html, styles.css, app.js (both workspaces as tabs)
 ├── data/seed.json       # Fictional demo data
@@ -235,9 +236,11 @@ Create a `.env` file in the project root from `.env.example`:
 
 ```
 ANTHROPIC_API_KEY=your_api_key_here
+# Optional: the agency's time zone for dates (default America/New_York)
+CAREOPS_TZ=America/New_York
 ```
 
-Without a key the application works normally; only the Claude buttons return an error. `DATABASE_URL` will be added when we move to PostgreSQL.
+Without a key the application works normally; only the Claude buttons return an error. `CAREOPS_TZ` sets the time zone used for "today" and for issue creation dates, whatever the server's own time zone (Render runs in UTC). `DATABASE_URL` will be added when we move to PostgreSQL.
 
 ## Security
 
@@ -428,22 +431,27 @@ Agreed by Brahim and Sarah on November 10, 2026. They replace the original plan 
 | Readiness states | Not Ready, At Risk, In Progress, Ready, always with a reason in French | More useful than Ready / Not Ready alone |
 | Incomplete milestone | In Progress; a late milestone makes the client At Risk; only a Blocked milestone makes it Not Ready | Unfinished work is not a crisis |
 | Critical issue with no link | Fail-safe: it blocks every client until triaged; Medium and Low issues never block | A Critical issue must never drop out of readiness because it is not linked yet |
-| Triage deadline | Same business day (weekends skipped; see the table below); triage identifies the affected clients, only resolving removes the block | Keeps false blocks short |
+| Triage deadline | Same business day (weekends and holidays skipped, agency time zone; see the table below); triage identifies the affected clients, only resolving removes the block | Keeps false blocks short |
 | Frontend layout | One page with two tabs | Simpler navigation, no duplicated UI |
 | Data access | Built-in `sqlite3`, no SQLAlchemy | Enough for this scope, no extra dependency |
 | Interface language | French in the interface; code, database columns and identifiers in English | Matches the users; keeps the code maintainable |
 
 Built by Sarah (PR #1, November 10): an open Critical issue still linked to no client is flagged **En retard de triage** next to **À trier**, in both workspaces. The server computes the flag (`overdueForTriage` in `/api/state`).
 
-**Overdue triage counts business days** (agreed with Sarah, November 10). The deadline is the end of the business day the issue was created; an issue created on a weekend is due on Monday. The flag appears on the next business day, never over a weekend:
+**Overdue triage counts business days** (agreed with Sarah, November 10). The deadline is the end of the business day the issue was created; an issue created on a weekend or a holiday is due on the next business day. The flag appears on the next business day after the deadline, never on a weekend or a holiday, so an issue is never flagged too early:
 
 | Created | Due by the end of | Flagged from |
 | --- | --- | --- |
-| Monday to Thursday | the same day | the next day |
+| Monday to Thursday | the same day | the next business day |
 | Friday | Friday | Monday |
 | Saturday or Sunday | Monday | Tuesday |
+| Friday before a Monday holiday (May 28, 2027) | Friday | Tuesday |
+| Wednesday before Thanksgiving (Nov 25, 2026) | Wednesday | Friday |
 
-Public holidays are not counted yet.
+- **Holidays:** US federal holidays (observed dates) for 2026 and 2027, listed in `app/business_days.py`. The list still has to be confirmed with Sarah: a home-care agency may work on some of them.
+- **Time zone:** dates use the agency's time zone (`CAREOPS_TZ`, default `America/New_York`), not the server's. An issue created at 11:59 p.m. in New York is dated that day, even on a UTC server, and a Thursday issue is not flagged at 7 p.m. New York time just because it is already Friday in UTC.
+
+Tests: `test_retard_de_tri_en_jours_ouvres`, `test_retard_de_tri_saute_les_jours_feries`, `test_dates_dans_le_fuseau_de_l_agence`, `test_api_date_les_problemes_dans_le_fuseau_de_l_agence`.
 
 ## Progress and Next Steps
 
@@ -458,7 +466,7 @@ Public holidays are not counted yet.
 - [x] Fail-safe rule for untriaged Critical issues and the **All clients** option, with tests
 - [x] End-to-end test plan run on `main` (9/9 steps)
 - [x] Brahim and Sarah agreed on the [Decisions](#decisions)
-- [x] Overdue triage counts business days; presentation demo scripted and covered by a test (28 pass)
+- [x] Overdue triage counts business days, skips US federal holidays and uses the agency's time zone; presentation demo scripted and covered by a test (31 pass)
 - [x] Sarah's old branch `Implementation-Workplace` is not needed: its demo data predates the current model
 
 ### Next steps
@@ -466,7 +474,7 @@ Public holidays are not counted yet.
 1. Rehearse the [Presentation Demo](#presentation-demo) together, with Sarah driving the Implementation workspace; it doubles as the end-to-end rerun.
 2. Prepare the Render deployment (and decide whether production needs PostgreSQL or stays on SQLite).
 3. Run the validation plan for assumption A1 (severity levels) with 2 or 3 testers.
-4. Decide whether overdue triage should skip public holidays.
+4. Confirm with Sarah which holidays the agency observes, and extend the list beyond 2027.
 
 ## License
 
