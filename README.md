@@ -43,7 +43,7 @@ When milestones and bugs live in separate tools, the "ready / not ready" call is
 
 - **Speed is not measured.** The target "find what blocks a client in under 30 seconds" (see Success Metrics) has not been timed with real testers.
 - **Severity scale is unvalidated.** With three levels (assumption A1), a serious issue with a costly workaround is either invisible in readiness (Medium) or wrongly blocks it (Critical).
-- **One rule, agreed but not yet tested together.** On November 10, 2026, Brahim and Sarah agreed on the client-based rule in `main` (see [Decisions](#decisions)). Sarah's branch `Implementation-Workplace` still uses the old milestone-based model and will not be merged as is; the end-to-end test still has to be rerun with Sarah.
+- **One rule, agreed but not yet tested together.** On November 10, 2026, Brahim and Sarah agreed on the client-based rule in `main` (see [Decisions](#decisions)). Sarah's earlier branch `Implementation-Workplace` (old milestone-based model) was deleted on November 10, and her work now goes through `main`; the end-to-end test still has to be rerun with Sarah.
 
 ## Product Vision
 
@@ -426,13 +426,13 @@ Built by Sarah (PR #1, November 10): an open Critical issue still linked to no c
 - [x] Readiness rules and both workspaces working on FastAPI + SQLite
 - [x] Three Claude features tested against the live API
 - [x] Layout works on phone width (no horizontal scroll)
-- [x] Fail-safe rule for untriaged Critical issues and the **All clients** option, with tests (19 pass)
+- [x] Fail-safe rule for untriaged Critical issues and the **All clients** option, with tests (26 pass in total)
 - [x] End-to-end test plan run on `main` (9/9 steps)
 - [x] Brahim and Sarah agreed on the [Decisions](#decisions)
 
 ### Next steps
 
-1. Decide with Sarah what to keep from her branch `Implementation-Workplace` (for example her demo data), bring it into `main`, then archive the branch.
+1. Confirm with Sarah whether she kept demo data from her deleted branch `Implementation-Workplace`; if so, bring it into `main`.
 2. Rerun the end-to-end test plan together, with Sarah driving the Implementation workspace.
 3. Decide whether overdue triage should count business days instead of calendar days.
 4. Prepare the Render deployment (and decide whether production needs PostgreSQL or stays on SQLite).
