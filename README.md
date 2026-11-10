@@ -43,7 +43,7 @@ When milestones and bugs live in separate tools, the "ready / not ready" call is
 
 - **Speed is not measured.** The target "find what blocks a client in under 30 seconds" (see Success Metrics) has not been timed with real testers.
 - **Severity scale is unvalidated.** With three levels (assumption A1), a serious issue with a costly workaround is either invisible in readiness (Medium) or wrongly blocks it (Critical).
-- **Two readiness rules exist.** Sarah's branch `Implementation-Workplace` links issues to milestones instead of clients. The team must agree on one rule before merging (see Open Decisions).
+- **One rule, agreed but not yet tested together.** On November 10, 2026, Brahim and Sarah agreed on the client-based rule in `main` (see [Decisions](#decisions)). Sarah's branch `Implementation-Workplace` still uses the old milestone-based model and will not be merged as is; the end-to-end test still has to be rerun with Sarah.
 
 ## Product Vision
 
@@ -74,7 +74,7 @@ The platform surfaces blockers and calculates implementation readiness using det
 - Assign issue severity: Low, Medium, Critical
 - Update issue status: Open, In Progress, Resolved
 - Associate issues with features
-- Link issues to implementation milestones
+- Link issues to the affected clients, to **All clients**, or leave them **To triage**
 
 ### Implementation Workspace (Sarah)
 
@@ -116,7 +116,7 @@ An open Critical issue therefore always blocks at least one client. Medium and L
 
 **Ready** only when no unresolved Critical issue affects the client, AND all milestones are Completed.
 
-Otherwise the client is **At Risk** (a milestone is late) or **In Progress**. This rule is computed in `app/readiness.py` and proven by `tests/test_tickets.py`. The original plan linked issues to milestones and had two states only; see [Open Decisions](#open-decisions).
+Otherwise the client is **At Risk** (a milestone is late) or **In Progress**. This rule is computed in `app/readiness.py` and proven by `tests/test_tickets.py`. The original plan linked issues to milestones and had two states only; the team replaced it on November 10, 2026 (see [Decisions](#decisions)).
 
 ### Untriaged issues (fail-safe)
 
@@ -131,7 +131,7 @@ When in doubt, the rule blocks: an unknown scope never lets a client go live. On
 
 For an issue that affects everyone (a login outage, for example), tick **All clients** (Tous les clients) instead of each client one by one. The issue then counts for every client, including clients added later, and is shown as triaged.
 
-The cost is a false block until triage, so the team should agree on a triage deadline (for example, a Critical issue is triaged the same day).
+The cost is a false block until triage, so the team agreed on a deadline (November 10, 2026): **a Critical issue is triaged within the same business day.** Triage means identifying the affected clients, not fixing the issue; only resolving a Critical issue removes its block, and relinking it never removes the block silently.
 
 ### Important Note
 
@@ -157,8 +157,8 @@ Readiness is an informational indicator only. The system does not authorize or a
 | Frontend | HTML, CSS, JavaScript | Done |
 | Backend | Python, FastAPI | Done |
 | Database (local development) | SQLite | Done |
-| Database (production) | PostgreSQL | Planned |
-| ORM | SQLAlchemy | Planned (the current code uses Python's built-in `sqlite3`) |
+| Database (production) | PostgreSQL or SQLite | To decide with the Render deployment |
+| Data access | Python's built-in `sqlite3` | Done; SQLAlchemy dropped (decided November 10, 2026) |
 | AI | Anthropic API (Claude), server-side only | Done, tested against the live API (Nov 4, 2026) |
 | Source control | GitHub | Done |
 | Deployment | Render | Planned |
@@ -289,7 +289,7 @@ Outputs are plain text (no Markdown) with dates written out in full, because the
 ## Core User Journey
 
 1. Product Manager creates a Critical technical issue.
-2. Issue is linked to the affected client (the plan said a milestone; see [Open Decisions](#open-decisions)).
+2. Issue is linked to the affected client (the plan said a milestone; see [Decisions](#decisions)).
 3. Implementation Workspace displays the issue as a blocker.
 4. Readiness becomes Not Ready.
 5. Product Manager resolves the issue.
@@ -305,7 +305,7 @@ Outputs are plain text (no Markdown) with dates written out in full, because the
 - Create technical issues
 - Update issue severity
 - Update issue status
-- Link issues to milestones
+- Link issues to affected clients (or All clients)
 - Persist data
 
 ### Implementation Workspace
@@ -345,7 +345,7 @@ Brahim and Sarah run this workflow with a fictional healthcare client before mer
 
 **Step 7, corrected.** The first version of this plan expected a general Critical issue to stay visible *without* blocking. That would let a client go live while a Critical issue waits for triage, which breaks the core promise. We kept the fail-safe rule: when the scope is unknown, the issue blocks everyone. "Without affecting other implementations" applies to issues linked to clients.
 
-**Still to do:** rerun the plan with Sarah after her branch `Implementation-Workplace` is merged. The 2026-11-05 run covered `main` only.
+**Still to do:** rerun the plan with Sarah driving the Implementation workspace on `main`. The 2026-11-05 run was done by Brahim alone.
 
 ## Non-Goals
 
@@ -377,7 +377,7 @@ CareOps Hub is complete when:
 
 - Both workspaces function independently
 - Both workspaces connect to the shared backend
-- Issue-to-milestone linking works
+- Issue-to-client linking works, including All clients and To triage
 - Readiness rules behave correctly
 - Data persists after restart
 - Acceptance criteria pass
@@ -385,23 +385,26 @@ CareOps Hub is complete when:
 - Public demo URL is available
 - Final demonstration workflow succeeds
 
-## Open Decisions
+## Decisions
 
-The plan above and the current code differ on these points. Brahim and Sarah need to choose before the next component.
+Agreed by Brahim and Sarah on November 10, 2026. They replace the original plan where it differed; the code in `main` already follows them.
 
-| Topic | This README (plan) | Current code |
+| Topic | Decision | Why |
 | --- | --- | --- |
-| What an issue is linked to | A milestone | One or more clients |
-| Readiness states | Not Ready, Ready | Not Ready, At Risk (a milestone is late), In Progress, Ready, always with the reason |
-| Incomplete milestone | Makes the client Not Ready | Makes the client In Progress; only a Blocked milestone makes it Not Ready |
-| Frontend layout | Separate `product/` and `implementation/` pages | One page with two tabs (`public/`) |
-| Data access | SQLAlchemy | Built-in `sqlite3` |
-| Interface language | Not specified | French |
-| Critical issue with no link | Not specified. On Sarah's branch, a Critical issue linked to no milestone leaves the client READY | Fail-safe: an open Critical issue always blocks at least one client. Linked to clients: those clients. **All clients**: every client, including clients added later. No client yet (**To triage**): every client until triaged. Medium and Low issues never block. Proposed by Brahim; **to decide with Sarah**, together with a triage deadline (for example, same day) |
+| What an issue is linked to | One or more clients, or **All clients** (including clients added later) | One issue often affects several clients; no duplicates |
+| Readiness states | Not Ready, At Risk, In Progress, Ready, always with a reason in French | More useful than Ready / Not Ready alone |
+| Incomplete milestone | In Progress; a late milestone makes the client At Risk; only a Blocked milestone makes it Not Ready | Unfinished work is not a crisis |
+| Critical issue with no link | Fail-safe: it blocks every client until triaged; Medium and Low issues never block | A Critical issue must never drop out of readiness because it is not linked yet |
+| Triage deadline | Same business day; triage identifies the affected clients, only resolving removes the block | Keeps false blocks short |
+| Frontend layout | One page with two tabs | Simpler navigation, no duplicated UI |
+| Data access | Built-in `sqlite3`, no SQLAlchemy | Enough for this scope, no extra dependency |
+| Interface language | French in the interface; code, database columns and identifiers in English | Matches the users; keeps the code maintainable |
+
+Proposed by Sarah, not built yet: flag a Critical issue as **overdue for triage** once the same-day deadline passes.
 
 ## Progress and Next Steps
 
-### Where we stopped (November 5, 2026)
+### Where we stopped (November 10, 2026)
 
 - [x] Shared repository, both partners connected, secrets guard in place
 - [x] PRD and README (user stories, assumptions and validation)
@@ -411,14 +414,14 @@ The plan above and the current code differ on these points. Brahim and Sarah nee
 - [x] Layout works on phone width (no horizontal scroll)
 - [x] Fail-safe rule for untriaged Critical issues and the **All clients** option, with tests (19 pass)
 - [x] End-to-end test plan run on `main` (9/9 steps)
+- [x] Brahim and Sarah agreed on the [Decisions](#decisions)
 
 ### Next steps
 
-1. Brahim and Sarah settle the [Open Decisions](#open-decisions), starting with: is an issue linked to milestones or to clients?
-   Then agree on the fail-safe rule for Critical issues with no link, and on a triage deadline.
-2. Implement issue-to-milestone linking if chosen (required by the Definition of Done).
-3. Align the readiness rules with the decision (two states or four).
-4. Move data access to SQLAlchemy, then prepare PostgreSQL and the Render deployment.
+1. Decide with Sarah what to keep from her branch `Implementation-Workplace` (for example her demo data), bring it into `main`, then archive the branch.
+2. Rerun the end-to-end test plan together, with Sarah driving the Implementation workspace.
+3. Decide whether to build the **overdue for triage** flag proposed by Sarah.
+4. Prepare the Render deployment (and decide whether production needs PostgreSQL or stays on SQLite).
 5. Run the validation plan for assumption A1 (severity levels) with 2 or 3 testers.
 
 ## License
