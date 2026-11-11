@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,86 +19,86 @@
       <span>CareOps <em>Hub</em></span>
     </div>
     <nav class="tabs" role="tablist">
-      <button class="tab" role="tab" data-tab="product" aria-selected="true">Produit · Brahim</button>
-      <button class="tab" role="tab" data-tab="implementation" aria-selected="false">Implémentation · Sarah</button>
+      <button class="tab" role="tab" data-tab="product" aria-selected="true">Product · Brahim</button>
+      <button class="tab" role="tab" data-tab="implementation" aria-selected="false">Implementation · Sarah</button>
     </nav>
-    <button id="reset" class="ghost" title="Remettre les données de démo">Réinitialiser la démo</button>
+    <button id="reset" class="ghost" title="Restore the demo data">Reset demo</button>
   </header>
 
-  <section class="hero" aria-label="Présentation">
+  <section class="hero" aria-label="Introduction">
     <div class="hero-text">
-      <p class="hero-kicker">Soins à domicile · Sciences de la vie</p>
-      <h1>Chaque déploiement réussi, ce sont des soins qui arrivent à temps.</h1>
-      <p>Produit et Implémentation partagent les mêmes données, pour que chaque client démarre en confiance.</p>
+      <p class="hero-kicker">Home care · Life sciences</p>
+      <h1>Every successful go-live means care that arrives on time.</h1>
+      <p>Product and Implementation share the same data, so every client starts with confidence.</p>
     </div>
   </section>
 
   <main>
-    <section class="readiness-strip" aria-label="Préparation au déploiement par client">
-      <h2>Préparation au déploiement</h2>
+    <section class="readiness-strip" aria-label="Go-live readiness by client">
+      <h2>Go-live readiness</h2>
       <div id="readiness-cards" class="cards"></div>
     </section>
 
-    <!-- ESPACE PRODUIT -->
+    <!-- PRODUCT WORKSPACE -->
     <section id="tab-product" class="workspace">
       <div class="panel">
         <div class="panel-head">
-          <h2>Problèmes techniques</h2>
+          <h2>Technical issues</h2>
           <div class="filters">
-            <select id="filter-severity" aria-label="Filtrer par gravité"><option value="">Toutes les gravités</option></select>
-            <select id="filter-state" aria-label="Filtrer par état"><option value="">Tous les états</option></select>
-            <select id="filter-client" aria-label="Filtrer par client"><option value="">Tous les clients</option></select>
+            <select id="filter-severity" aria-label="Filter by severity"><option value="">All severities</option></select>
+            <select id="filter-state" aria-label="Filter by state"><option value="">All states</option></select>
+            <select id="filter-client" aria-label="Filter by client"><option value="">All clients</option></select>
           </div>
         </div>
         <div class="table-wrap"><table id="issues-table"></table></div>
 
         <details class="add">
-          <summary>+ Nouveau problème</summary>
+          <summary>+ New issue</summary>
           <form id="issue-form" class="form-grid">
-            <label>Titre<input name="title" required maxlength="160"></label>
-            <label>Fonctionnalité<select name="featureId"></select></label>
+            <label>Title<input name="title" required maxlength="160"></label>
+            <label>Feature<select name="featureId"></select></label>
             <label class="wide">Description<textarea name="description" rows="3" maxlength="2000"></textarea></label>
-            <label class="wide">Étape concernée <span class="muted">(facultatif : relie aussi le client de l'étape)</span><select name="milestoneId"></select></label>
-            <fieldset class="wide"><legend>Clients touchés <span class="muted">(laisser vide si on ne sait pas encore : « À trier »)</span></legend><label class="all-clients"><input type="checkbox" id="issue-all-clients"> <strong>Tous les clients</strong> <span class="muted">(y compris ceux ajoutés plus tard)</span></label><div id="issue-clients" class="checks"></div></fieldset>
-            <label>Gravité<select name="severity"></select></label>
-            <label>Statut initial<select name="state"></select></label>
+            <label class="wide">Milestone it delays <span class="muted">(optional: also links that milestone's client)</span><select name="milestoneId"></select></label>
+            <fieldset class="wide"><legend>Affected clients <span class="muted">(leave empty if not known yet: “To triage”)</span></legend><label class="all-clients"><input type="checkbox" id="issue-all-clients"> <strong>All clients</strong> <span class="muted">(including clients added later)</span></label><div id="issue-clients" class="checks"></div></fieldset>
+            <label>Severity<select name="severity"></select></label>
+            <label>Initial state<select name="state"></select></label>
             <div class="ai-inline">
-              <button type="button" id="suggest-severity" class="ai">Suggérer la gravité avec Claude</button>
+              <button type="button" id="suggest-severity" class="ai">Suggest severity with Claude</button>
               <p id="severity-suggestion" class="ai-note" hidden></p>
             </div>
-            <div class="wide actions"><button type="submit">Créer le problème</button></div>
+            <div class="wide actions"><button type="submit">Create issue</button></div>
           </form>
         </details>
       </div>
 
       <div class="panel">
-        <h2>Fonctionnalités</h2>
+        <h2>Features</h2>
         <div class="table-wrap"><table id="features-table"></table></div>
         <details class="add">
-          <summary>+ Nouvelle fonctionnalité</summary>
+          <summary>+ New feature</summary>
           <form id="feature-form" class="form-grid">
-            <label>Nom<input name="name" required maxlength="120"></label>
-            <label>Statut<select name="status">
-              <option>Planifiée</option><option>En développement</option><option>Livrée</option>
+            <label>Name<input name="name" required maxlength="120"></label>
+            <label>Status<select name="status">
+              <option>Planned</option><option>In Development</option><option>Shipped</option>
             </select></label>
             <label class="wide">Description<input name="description" maxlength="500"></label>
-            <div class="wide actions"><button type="submit">Créer la fonctionnalité</button></div>
+            <div class="wide actions"><button type="submit">Create feature</button></div>
           </form>
         </details>
       </div>
     </section>
 
-    <!-- ESPACE IMPLÉMENTATION -->
+    <!-- IMPLEMENTATION WORKSPACE -->
     <section id="tab-implementation" class="workspace" hidden>
       <div class="panel">
         <div class="panel-head">
           <label class="client-picker">Client <select id="client-select"></select></label>
           <details class="add inline">
-            <summary>+ Nouveau client</summary>
+            <summary>+ New client</summary>
             <form id="client-form" class="form-row">
-              <input name="name" placeholder="Nom du client" required maxlength="120">
-              <input name="goLiveDate" type="date" aria-label="Date de go-live">
-              <button type="submit">Ajouter</button>
+              <input name="name" placeholder="Client name" required maxlength="120">
+              <input name="goLiveDate" type="date" aria-label="Go-live date">
+              <button type="submit">Add</button>
             </form>
           </details>
         </div>
@@ -106,41 +106,41 @@
       </div>
 
       <div class="panel">
-        <h2>Étapes clés</h2>
+        <h2>Milestones</h2>
         <div class="table-wrap"><table id="milestones-table"></table></div>
         <details class="add">
-          <summary>+ Nouvelle étape</summary>
+          <summary>+ New milestone</summary>
           <form id="milestone-form" class="form-grid">
-            <label>Nom<input name="name" required maxlength="160"></label>
-            <label>Échéance<input name="dueDate" type="date"></label>
-            <label>Responsable<input name="owner" maxlength="80"></label>
-            <label>Statut<select name="status"></select></label>
-            <label class="wide">Cause du blocage <span class="muted">(obligatoire si l'étape est Bloquée)</span><input name="blocker" maxlength="1000"></label>
-            <div class="wide actions"><button type="submit">Ajouter l'étape</button></div>
+            <label>Name<input name="name" required maxlength="160"></label>
+            <label>Due date<input name="dueDate" type="date"></label>
+            <label>Owner<input name="owner" maxlength="80"></label>
+            <label>Status<select name="status"></select></label>
+            <label class="wide">Blocker <span class="muted">(required when the milestone is Blocked)</span><input name="blocker" maxlength="1000"></label>
+            <div class="wide actions"><button type="submit">Add milestone</button></div>
           </form>
         </details>
       </div>
 
       <div class="panel">
-        <h2>Problèmes techniques qui touchent ce client</h2>
-        <p class="muted">En lecture seule : c'est l'équipe Produit qui les met à jour.</p>
+        <h2>Technical issues affecting this client</h2>
+        <p class="muted">Read-only: the Product team keeps them up to date.</p>
         <ul id="client-issues" class="issue-list"></ul>
       </div>
 
       <div class="panel">
-        <h2>Assistant Claude</h2>
-        <p class="muted">Claude propose, vous validez : rien n'est envoyé ni modifié automatiquement.</p>
+        <h2>Claude assistant</h2>
+        <p class="muted">Claude drafts, you decide: nothing is sent or changed automatically.</p>
         <div class="ai-actions">
-          <button id="ai-summary" class="ai">Générer le résumé de préparation</button>
-          <button id="ai-email" class="ai">Rédiger l'e-mail au client</button>
+          <button id="ai-summary" class="ai">Generate readiness summary</button>
+          <button id="ai-email" class="ai">Draft client email</button>
         </div>
-        <label class="ai-output">Résumé de préparation
-          <textarea id="summary-output" rows="5" placeholder="Le résumé apparaîtra ici. Vous pouvez le modifier."></textarea>
+        <label class="ai-output">Readiness summary
+          <textarea id="summary-output" rows="5" placeholder="The summary will appear here. You can edit it."></textarea>
         </label>
-        <label class="ai-output">Brouillon d'e-mail
-          <textarea id="email-output" rows="9" placeholder="Le brouillon apparaîtra ici. Relisez-le avant de l'envoyer."></textarea>
+        <label class="ai-output">Email draft
+          <textarea id="email-output" rows="9" placeholder="The draft will appear here. Review it before sending."></textarea>
         </label>
-        <button id="copy-email" class="ghost">Copier l'e-mail</button>
+        <button id="copy-email" class="ghost">Copy email</button>
       </div>
     </section>
   </main>

@@ -7,12 +7,12 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-Severity = Literal["Critique", "Moyenne", "Faible"]
-IssueState = Literal["Ouvert", "En cours", "Résolu"]
-MilestoneState = Literal["À faire", "En cours", "Terminé", "Bloqué"]
-FeatureState = Literal["Planifiée", "En développement", "Livrée"]
+Severity = Literal["Critical", "Medium", "Low"]
+IssueState = Literal["Open", "In Progress", "Resolved"]
+MilestoneState = Literal["To Do", "In Progress", "Done", "Blocked"]
+FeatureState = Literal["Planned", "In Development", "Shipped"]
 
-BLOCKER_REQUIRED = "Une étape bloquée doit avoir une cause : décrivez le point de blocage."
+BLOCKER_REQUIRED = "A blocked milestone needs a cause: describe what is blocking it."
 
 # Date ISO (AAAA-MM-JJ) ou vide.
 OptionalDate = Field("", pattern=r"^(\d{4}-\d{2}-\d{2})?$")
@@ -30,14 +30,14 @@ class Client(Base):
 class Feature(Base):
     name: str = Field(min_length=1, max_length=120)
     description: str = Field("", max_length=500)
-    status: FeatureState = "Planifiée"
+    status: FeatureState = "Planned"
 
 
 class Issue(Base):
     title: str = Field(min_length=1, max_length=160)
     description: str = Field("", max_length=2000)
-    severity: Severity = "Moyenne"
-    state: IssueState = "Ouvert"
+    severity: Severity = "Medium"
+    state: IssueState = "Open"
     featureId: str = ""
     clientIds: list[str] = []
     allClients: bool = False  # touche tous les clients, y compris ceux ajoutés plus tard
@@ -49,13 +49,13 @@ class Milestone(Base):
     name: str = Field(min_length=1, max_length=160)
     dueDate: str = OptionalDate
     owner: str = Field("", max_length=80)
-    status: MilestoneState = "À faire"
+    status: MilestoneState = "To Do"
     blocker: str = Field("", max_length=1000)
 
     @model_validator(mode="after")
     def blocked_needs_cause(self):
         # Une étape Bloquée rend le client « Non prêt » : la cause doit être écrite pour savoir quoi débloquer.
-        if self.status == "Bloqué" and not self.blocker:
+        if self.status == "Blocked" and not self.blocker:
             raise ValueError(BLOCKER_REQUIRED)
         return self
 

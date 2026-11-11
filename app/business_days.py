@@ -45,7 +45,7 @@ def holidays() -> frozenset[date]:
         try:
             days.add(date.fromisoformat(item))
         except ValueError:
-            raise ValueError(f"CAREOPS_HOLIDAYS : date invalide « {item} » (format attendu AAAA-MM-JJ).") from None
+            raise ValueError(f"CAREOPS_HOLIDAYS: invalid date “{item}” (expected YYYY-MM-DD).") from None
     return frozenset(days)
 
 
@@ -72,14 +72,14 @@ def triage_calendar() -> dict:
     raw = os.getenv("CAREOPS_HOLIDAYS")
     days = holidays()
     if raw is None:
-        mode, label = "federal", "jours fériés fédéraux US"
+        mode, label = "federal", "US federal holidays"
     elif not days:
-        mode, label = "none", "aucun jour férié"
+        mode, label = "none", "no holidays"
     else:
-        mode, label = "custom", "jours fériés de l'agence (" + ", ".join(d.isoformat() for d in sorted(days)) + ")"
+        mode, label = "custom", "agency holidays (" + ", ".join(d.isoformat() for d in sorted(days)) + ")"
     return {
         "holidays": mode,
         "holidayDates": sorted(d.isoformat() for d in days),
         "timeZone": agency_tz().key,
-        "label": f"week-ends et {label} exclus ; dates à l'heure de {agency_tz().key}",
+        "label": f"weekends and {label} skipped; dates in {agency_tz().key} time",
     }

@@ -21,14 +21,14 @@ CREATE TABLE IF NOT EXISTS features (
     id           TEXT PRIMARY KEY,
     name         TEXT NOT NULL,
     description  TEXT NOT NULL DEFAULT '',
-    status       TEXT NOT NULL CHECK (status IN ('Planifiée', 'En développement', 'Livrée'))
+    status       TEXT NOT NULL CHECK (status IN ('Planned', 'In Development', 'Shipped'))
 );
 CREATE TABLE IF NOT EXISTS issues (
     id           TEXT PRIMARY KEY,
     title        TEXT NOT NULL,
     description  TEXT NOT NULL DEFAULT '',
-    severity     TEXT NOT NULL CHECK (severity IN ('Critique', 'Moyenne', 'Faible')),
-    state        TEXT NOT NULL CHECK (state IN ('Ouvert', 'En cours', 'Résolu')),
+    severity     TEXT NOT NULL CHECK (severity IN ('Critical', 'Medium', 'Low')),
+    state        TEXT NOT NULL CHECK (state IN ('Open', 'In Progress', 'Resolved')),
     feature_id   TEXT REFERENCES features(id) ON DELETE SET NULL,
     created_at   TEXT NOT NULL,
     -- 1 = touche tous les clients, y compris ceux ajoutés plus tard (issue_clients reste vide).
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS milestones (
     name       TEXT NOT NULL,
     due_date   TEXT NOT NULL DEFAULT '',
     owner      TEXT NOT NULL DEFAULT '',
-    status     TEXT NOT NULL CHECK (status IN ('À faire', 'En cours', 'Terminé', 'Bloqué')),
+    status     TEXT NOT NULL CHECK (status IN ('To Do', 'In Progress', 'Done', 'Blocked')),
     blocker    TEXT NOT NULL DEFAULT ''
 );
 """
@@ -81,8 +81,63 @@ def connect():
         conn.close()
 
 
+# Valeurs stockées en français avant le passage de l'interface en anglais (novembre 2026).
+FRENCH_TO_ENGLISH = {
+    "features": {"status": {"Planifiée": "Planned", "En développement": "In Development", "Livrée": "Shipped"}},
+    "issues": {
+        "severity": {"Critique": "Critical", "Moyenne": "Medium", "Faible": "Low"},
+        "state": {"Ouvert": "Open", "En cours": "In Progress", "Résolu": "Resolved"},
+    },
+    "milestones": {"status": {"À faire": "To Do", "En cours": "In Progress", "Terminé": "Done", "Bloqué": "Blocked"}},
+}
+
+
+def _table_sql(table: str) -> str:
+    """Le CREATE TABLE d'une table, tiré de SCHEMA."""
+    start = SCHEMA.index(f"CREATE TABLE IF NOT EXISTS {table} (")
+    return SCHEMA[start:SCHEMA.index(");", start) + 2]
+
+
+def migrate_french_values(path: Path) -> bool:
+    """Convertit une base créée avec les valeurs françaises (Critique, Bloqué…) en anglais.
+
+    SQLite ne sait pas modifier une contrainte CHECK : chaque table concernée est recréée
+    avec le schéma anglais, puis ses lignes sont recopiées en traduisant les valeurs.
+    Les textes saisis (titres, noms) ne changent pas. Renvoie True si la base a été convertie.
+    """
+    if not path.exists():
+        return False
+    conn = sqlite3.connect(path)
+    try:
+        row = conn.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'issues'").fetchone()
+        if not row or "'Critique'" not in row[0]:
+            return False
+        conn.execute("PRAGMA foreign_keys = OFF")  # les tables sont remplacées une à une
+        conn.execute("BEGIN")
+        for table, columns in FRENCH_TO_ENGLISH.items():
+            old_cols = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")]
+            conn.execute(_table_sql(table).replace(f"CREATE TABLE IF NOT EXISTS {table} (", f"CREATE TABLE {table}_en ("))
+            new_cols = [r[1] for r in conn.execute(f"PRAGMA table_info({table}_en)")]
+            cols = [c for c in old_cols if c in new_cols]
+            select = []
+            for c in cols:
+                if c in columns:
+                    cases = " ".join(f"WHEN '{fr}' THEN '{en}'" for fr, en in columns[c].items())
+                    select.append(f"CASE {c} {cases} ELSE {c} END")
+                else:
+                    select.append(c)
+            conn.execute(f"INSERT INTO {table}_en ({', '.join(cols)}) SELECT {', '.join(select)} FROM {table}")
+            conn.execute(f"DROP TABLE {table}")
+            conn.execute(f"ALTER TABLE {table}_en RENAME TO {table}")
+        conn.execute("COMMIT")
+        return True
+    finally:
+        conn.close()
+
+
 def init_db() -> None:
     """Crée les tables et charge les données de démo si la base est vide."""
+    migrate_french_values(db_path())
     with connect() as conn:
         conn.executescript(SCHEMA)
         # Base créée avant l'option « Tous les clients » : on ajoute la colonne.
@@ -211,13 +266,13 @@ def delete(collection: str, item_id: str) -> bool:
 
 def _check_refs(conn, collection: str, values: dict) -> None:
     if collection == "milestones" and not conn.execute("SELECT 1 FROM clients WHERE id = ?", (values["clientId"],)).fetchone():
-        raise InvalidReference("Client inconnu.")
+        raise InvalidReference("Unknown client.")
     if collection == "issues" and values.get("featureId") and not conn.execute("SELECT 1 FROM features WHERE id = ?", (values["featureId"],)).fetchone():
-        raise InvalidReference("Fonctionnalité inconnue.")
+        raise InvalidReference("Unknown feature.")
     if collection == "issues" and values.get("milestoneId"):
         row = conn.execute("SELECT client_id FROM milestones WHERE id = ?", (values["milestoneId"],)).fetchone()
         if not row:
-            raise InvalidReference("Étape inconnue.")
+            raise InvalidReference("Unknown milestone.")
         # Lier une étape lie aussi son client : c'est le client qui porte le blocage.
         if not values.get("allClients") and row["client_id"] not in (values.get("clientIds") or []):
             values["clientIds"] = [*(values.get("clientIds") or []), row["client_id"]]
@@ -228,4 +283,4 @@ def _check_refs(conn, collection: str, values: dict) -> None:
         placeholders = ", ".join("?" * len(ids))
         found = conn.execute(f"SELECT COUNT(*) FROM clients WHERE id IN ({placeholders})", ids).fetchone()[0]
         if found != len(ids):
-            raise InvalidReference("Client inconnu.")
+            raise InvalidReference("Unknown client.")

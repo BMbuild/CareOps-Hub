@@ -12,11 +12,11 @@ from .readiness import SEVERITIES, affects, is_late
 
 MODEL = "claude-opus-5-5"
 
-SYSTEM = """Tu es l'assistant de CareOps Hub, un outil qui suit les implémentations clients d'un éditeur de logiciels pour les soins à domicile.
-Tu réponds en français, de façon brève, factuelle et professionnelle.
-Tu t'appuies uniquement sur les données fournies ; si une information manque, dis-le au lieu de l'inventer.
-Tes textes s'affichent dans des zones de texte brut : n'utilise jamais de Markdown (ni astérisques, ni dièses, ni listes à puces).
-Écris les dates en toutes lettres, par exemple « 20 novembre 2026 », jamais au format 2026-11-20."""
+SYSTEM = """You are the assistant in CareOps Hub, a tool that tracks client implementations for a home-care software vendor.
+Answer in English, briefly, factually and professionally.
+Use only the data provided; if something is missing, say so instead of making it up.
+Your text is shown in plain-text boxes: never use Markdown (no asterisks, no hash signs, no bullet lists).
+Write dates in words, for example "November 20, 2026", never as 2026-11-20."""
 
 
 class AIError(Exception):
@@ -44,19 +44,19 @@ def _ask(prompt: str, fmt: dict | None = None) -> str:
             messages=[{"role": "user", "content": prompt}],
         )
     except anthropic.AuthenticationError as e:
-        raise AIError("Clé API Anthropic invalide : vérifiez le fichier .env.") from e
+        raise AIError("Invalid Anthropic API key: check the .env file.") from e
     except anthropic.RateLimitError as e:
-        raise AIError("Trop de demandes à Claude, réessayez dans un instant.") from e
+        raise AIError("Too many requests to Claude, try again in a moment.") from e
     except anthropic.APIStatusError as e:
-        raise AIError(f"Erreur de l'API Anthropic ({e.status_code}).") from e
+        raise AIError(f"Anthropic API error ({e.status_code}).") from e
     except anthropic.APIConnectionError as e:
-        raise AIError("Impossible de joindre l'API Anthropic.") from e
+        raise AIError("Could not reach the Anthropic API.") from e
 
     if response.stop_reason == "refusal":
-        raise AIError("Claude a refusé cette demande.")
+        raise AIError("Claude declined this request.")
     text = "".join(b.text for b in response.content if b.type == "text").strip()
     if not text:
-        raise AIError("Claude n'a renvoyé aucune réponse.")
+        raise AIError("Claude returned no answer.")
     return text
 
 
@@ -66,35 +66,35 @@ def _client_context(client: dict, state: dict, readiness: dict, today: str) -> s
     features = {f["id"]: f["name"] for f in state["features"]}
 
     lines = [
-        f"Client : {client['name']}",
-        f"Date de go-live prévue : {client['goLiveDate'] or 'non définie'}",
-        f"Date du jour : {today}",
-        f"État de préparation calculé : {readiness['status']} — {' ; '.join(readiness['reasons'])}",
+        f"Client: {client['name']}",
+        f"Planned go-live date: {client['goLiveDate'] or 'not set'}",
+        f"Today: {today}",
+        f"Computed readiness: {readiness['status']} — {'; '.join(readiness['reasons'])}",
         "",
-        "Étapes :",
+        "Milestones:",
     ]
     for m in milestones:
-        late = " (en retard)" if is_late(m, today) else ""
-        blocker = f" | blocage : {m['blocker']}" if m["blocker"] else ""
-        lines.append(f"- {m['name']} | statut : {m['status']}{late} | échéance : {m['dueDate'] or '—'} | responsable : {m['owner'] or '—'}{blocker}")
+        late = " (late)" if is_late(m, today) else ""
+        blocker = f" | blocker: {m['blocker']}" if m["blocker"] else ""
+        lines.append(f"- {m['name']} | status: {m['status']}{late} | due: {m['dueDate'] or '—'} | owner: {m['owner'] or '—'}{blocker}")
     if not milestones:
-        lines.append("- aucune")
-    lines += ["", "Problèmes techniques qui touchent ce client :"]
+        lines.append("- none")
+    lines += ["", "Technical issues affecting this client:"]
     for i in issues:
-        lines.append(f"- {i['title']} | gravité : {i['severity']} | état : {i['state']} | fonctionnalité : {features.get(i['featureId'], '—')}")
+        lines.append(f"- {i['title']} | severity: {i['severity']} | state: {i['state']} | feature: {features.get(i['featureId'], '—')}")
     if not issues:
-        lines.append("- aucun")
+        lines.append("- none")
     return "\n".join(lines)
 
 
 def summarize_readiness(client: dict, state: dict, readiness: dict, today: str) -> str:
     return _ask(f"""{_client_context(client, state, readiness, today)}
 
-Rédige un résumé de préparation au déploiement pour la cheffe de projet, en 3 à 5 phrases :
-1. l'état actuel et sa raison principale ;
-2. les risques pour la date de go-live ;
-3. la prochaine action concrète, avec son responsable si on le connaît.
-Pas de titre, pas de liste : un seul paragraphe.""")
+Write a go-live readiness summary for the implementation project manager, in 3 to 5 sentences:
+1. the current status and its main reason;
+2. the risks to the go-live date;
+3. the next concrete action, with its owner if known.
+No title, no list: a single paragraph.""")
 
 
 SEVERITY_FORMAT = {
@@ -113,33 +113,33 @@ SEVERITY_FORMAT = {
 
 def suggest_severity(title: str, description: str, feature_name: str | None) -> dict:
     text = _ask(
-        f"""Propose une gravité pour ce problème technique.
+        f"""Suggest a severity for this technical issue.
 
-Échelle :
-- Critique : bloque une fonction essentielle (visites, EVV, facturation, conformité) sans contournement, ou risque réglementaire.
-- Moyenne : gêne réelle ; un contournement existe, même s'il est coûteux.
-- Faible : défaut mineur ou esthétique.
+Scale:
+- Critical: blocks an essential function (visits, EVV, billing, compliance) with no workaround, or creates a regulatory risk.
+- Medium: a real problem; a workaround exists, even a costly one.
+- Low: a minor or cosmetic defect.
 
-Titre : {title}
-Fonctionnalité : {feature_name or 'non précisée'}
-Description : {description or 'aucune'}
+Title: {title}
+Feature: {feature_name or 'not specified'}
+Description: {description or 'none'}
 
-La justification tient en une ou deux phrases.""",
+Keep the justification to one or two sentences.""",
         SEVERITY_FORMAT,
     )
     result = json.loads(text)
     if result.get("severity") not in SEVERITIES:
-        raise AIError("Gravité proposée invalide.")
+        raise AIError("Claude suggested an invalid severity.")
     return result
 
 
 def draft_client_email(client: dict, state: dict, readiness: dict, today: str, summary: str) -> str:
-    validated = f"\nRésumé de préparation déjà validé :\n{summary}\n" if summary else ""
+    validated = f"\nReadiness summary already approved:\n{summary}\n" if summary else ""
     return _ask(f"""{_client_context(client, state, readiness, today)}
 {validated}
-Rédige un brouillon d'e-mail de mise à jour pour l'interlocuteur du client {client['name']}.
-- Commence par une ligne « Objet : ... ».
-- Ton rassurant mais honnête : n'annonce pas de date que les données ne permettent pas de garantir.
-- N'emploie pas de jargon interne (gravité, identifiants) ; décris l'impact pour le client.
-- Termine par la prochaine étape et une formule de politesse, signée « L'équipe Implémentation ».
-- 150 mots maximum.""")
+Draft an update email to the contact person at {client['name']}.
+- Start with a line "Subject: ...".
+- Reassuring but honest tone: do not promise a date the data cannot guarantee.
+- No internal jargon (severity, IDs); describe the impact for the client.
+- End with the next step and a polite closing, signed "The Implementation Team".
+- 150 words at most.""")

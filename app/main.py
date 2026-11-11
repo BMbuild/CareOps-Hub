@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
     db.init_db()
     holidays()  # une date invalide dans CAREOPS_HOLIDAYS arrête le démarrage avec un message clair
     if not os.environ.get("ANTHROPIC_API_KEY"):
-        log.warning("ANTHROPIC_API_KEY absente : les fonctions IA sont désactivées.")
+        log.warning("ANTHROPIC_API_KEY is missing: the AI features are turned off.")
     yield
 
 
@@ -65,13 +65,13 @@ def validate(collection: str, body: dict) -> dict:
         if not first["loc"] and first["type"] == "value_error":
             # Règle qui porte sur plusieurs champs (ex. étape bloquée sans cause) : son message suffit.
             raise ApiError(400, str(first["ctx"]["error"])) from e
-        field = ".".join(str(p) for p in first["loc"]) or "corps"
-        raise ApiError(400, f"Champ « {field} » invalide : {first['msg']}") from e
+        field = ".".join(str(p) for p in first["loc"]) or "body"
+        raise ApiError(400, f"Field “{field}” is invalid: {first['msg']}") from e
 
 
 def check_collection(collection: str) -> None:
     if collection not in MODELS:
-        raise ApiError(404, "Collection inconnue.")
+        raise ApiError(404, "Unknown collection.")
 
 
 # --- Données partagées --------------------------------------------------------
@@ -110,7 +110,7 @@ def update_item(collection: str, item_id: str, body: dict = Body(...)):
     check_collection(collection)
     existing = db.get(collection, item_id)
     if existing is None:
-        raise ApiError(404, "Élément introuvable.")
+        raise ApiError(404, "Item not found.")
     # Mise à jour partielle : on fusionne avec l'existant puis on revalide le tout.
     try:
         return db.update(collection, item_id, validate(collection, {**existing, **body}))
@@ -122,7 +122,7 @@ def update_item(collection: str, item_id: str, body: dict = Body(...)):
 def delete_item(collection: str, item_id: str):
     check_collection(collection)
     if not db.delete(collection, item_id):
-        raise ApiError(404, "Élément introuvable.")
+        raise ApiError(404, "Item not found.")
     return Response(status_code=204)
 
 
@@ -131,14 +131,14 @@ def delete_item(collection: str, item_id: str):
 
 def require_ai() -> None:
     if not os.environ.get("ANTHROPIC_API_KEY"):
-        raise ApiError(503, "IA indisponible : ANTHROPIC_API_KEY manquante dans .env.")
+        raise ApiError(503, "AI unavailable: ANTHROPIC_API_KEY is missing from .env.")
 
 
 def find_client(client_id: str):
     state = db.load_state()
     client = next((c for c in state["clients"] if c["id"] == client_id), None)
     if client is None:
-        raise ApiError(400, "Client introuvable.")
+        raise ApiError(400, "Client not found.")
     return client, state, compute_readiness(client, state, today())
 
 
@@ -161,7 +161,7 @@ def ai_severity(body: dict = Body(...)):
     require_ai()
     title = str(body.get("title", "")).strip()[:160]
     if not title:
-        raise ApiError(400, "Donnez un titre au problème avant de demander une gravité.")
+        raise ApiError(400, "Give the issue a title before asking for a severity.")
     features = {f["id"]: f["name"] for f in db.load_state()["features"]}
     description = str(body.get("description", ""))[:2000]
     return run_ai(ai.suggest_severity, title, description, features.get(body.get("featureId")))

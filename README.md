@@ -10,7 +10,7 @@ Built as a two-week MVP for the Pursuit L2 Cycle 4 Capstone, inspired by the "Pr
 
 - **Issue tracking (Product workspace):** log technical issues with a severity and link them to the clients they affect, to **All clients**, or leave them **To triage**; optionally link the milestone an issue delays.
 - **Milestone tracking (Implementation workspace):** each client's go-live milestones with owner, due date and status; a Blocked milestone must state its cause.
-- **Readiness status with a reason:** every client is **Not Ready**, **At Risk**, **In Progress** or **Ready**, recomputed on every change and always explained in plain words (the interface is in French, for example « 1 problème critique ouvert (Export EVV rejeté…) »).
+- **Readiness status with a reason:** every client is **Not Ready**, **At Risk**, **In Progress** or **Ready**, recomputed on every change and always explained in plain words (for example “1 open critical issue (EVV export rejected by the State aggregator…)”).
 - **Go-live guard:** a client with an open Critical issue can never show as Ready, and a Critical issue not yet linked to any client blocks every client until it is triaged; it is flagged overdue if not triaged the same business day.
 - **AI drafts, human decides:** Claude suggests a severity, summarizes readiness and drafts the client update email; a person reviews before anything is saved or sent.
 
@@ -18,15 +18,15 @@ The full feature list per workspace is in [MVP Features](#mvp-features).
 
 ## Demo
 
-![CareOps Hub, Product workspace: readiness cards show Horizon Soins à Domicile as Non prêt because of an open critical EVV issue on the milestone « Test EVV avec l'État », CareFirst Brooklyn as À risque because of a late milestone, and Bien-Être Queens as Prêt; below, the technical issues table with severity, state and affected clients](docs/screenshots/readiness-product.png)
+![CareOps Hub, Product workspace: readiness cards show Horizon Home Care as Not Ready because of an open critical EVV issue on the milestone “State EVV test”, CareFirst Brooklyn as At Risk because of a late milestone, and Queens Wellness Care as Ready; below, the technical issues table with severity, state and affected clients](docs/screenshots/readiness-product.png)
 
-*Product workspace (Brahim): every client shows a readiness status with its reason. Horizon is **Non prêt** because a critical issue, a rejected EVV export, delays its « Test EVV avec l'État » milestone; CareFirst is **À risque** because a milestone is late; Queens is **Prêt**.*
+*Product workspace (Brahim): every client shows a readiness status with its reason. Horizon is **Not Ready** because a critical issue, a rejected EVV export, delays its “State EVV test” milestone; CareFirst is **At Risk** because a milestone is late; Queens is **Ready**.*
 
-![CareOps Hub, Implementation workspace for Horizon Soins à Domicile: a red Non prêt banner lists the open critical issue and the blocked milestone, followed by the milestone table with owner, status and blocker, and the read-only list of technical issues affecting this client](docs/screenshots/implementation.png)
+![CareOps Hub, Implementation workspace for Horizon Home Care: a red Not Ready banner lists the open critical issue and the blocked milestone, followed by the milestone table with owner, status and blocker, and the read-only list of technical issues affecting this client](docs/screenshots/implementation.png)
 
 *Implementation workspace (Sarah), same data: the banner explains why Horizon is not ready, the blocked milestone states its cause, and the issues logged by Product appear read-only.*
 
-Captured on November 11, 2026 from the demo data (click **Réinitialiser la démo** to get the same view). The interface is in French for its users.
+Captured on November 11, 2026 from the demo data (click **Reset demo** to get the same view).
 
 ## Project Team
 
@@ -59,7 +59,7 @@ When milestones and bugs live in separate tools, the "ready / not ready" call is
 | Value | Where it shows up | How we know it works |
 | --- | --- | --- |
 | The go/no-go rule is automatic | `app/readiness.py` (`compute_readiness`): any open Critical issue linked to a client sets it to **Not Ready**, and an open Critical issue linked to no client yet blocks **every** client until it is triaged (see [Untriaged issues](#untriaged-issues-fail-safe)). Readiness is computed on every request and never stored, so it cannot go stale. | `tests/test_tickets.py`: creating a Critical issue makes the client Not Ready, and it survives a page refresh; an untriaged Critical issue makes every client Not Ready |
-| Blockers are visible in one place | Readiness cards at the top of both workspaces show the status and the reason, e.g. *Horizon Soins à Domicile*: Not Ready, "1 open critical issue (EVV export rejected by the State aggregator)" | Seeded demo scenario |
+| Blockers are visible in one place | Readiness cards at the top of both workspaces show the status and the reason, e.g. *Horizon Home Care*: Not Ready, "1 open critical issue (EVV export rejected by the State aggregator)" | Seeded demo scenario |
 | Product and Implementation share one view | When the Product workspace resolves an issue, the Implementation workspace's card updates on its own within 4 seconds | Manual end-to-end test in the browser |
 | Faster client communication | Claude drafts the readiness summary and the client email from the same data; a person reviews before anything is sent | Tested live against the API on November 4, 2026 |
 
@@ -114,21 +114,19 @@ The platform surfaces blockers and calculates implementation readiness using det
 
 ## Severity Levels and Statuses
 
-The interface is in French; each value is shown below with its French label.
+| Severity | Definition | Effect on readiness |
+| --- | --- | --- |
+| Critical | Blocks an essential function (visits, EVV, billing, compliance) with no workaround, or creates a regulatory risk | **Not Ready** until resolved |
+| Medium | Real impact, but a workaround exists, even if costly | None |
+| Low | Minor or cosmetic defect | None |
 
-| Severity | French label | Definition | Effect on readiness |
-| --- | --- | --- | --- |
-| Critical | Critique | Blocks an essential function (visits, EVV, billing, compliance) with no workaround, or creates a regulatory risk | **Not Ready** until resolved |
-| Medium | Moyenne | Real impact, but a workaround exists, even if costly | None |
-| Low | Faible | Minor or cosmetic defect | None |
+| Status | Meaning | Counts as unresolved? |
+| --- | --- | --- |
+| Open | Reported, nobody working on it yet | Yes |
+| In Progress | Fix in progress | Yes |
+| Resolved | Fix delivered and verified | No |
 
-| Status | French label | Meaning | Counts as unresolved? |
-| --- | --- | --- | --- |
-| Open | Ouvert | Reported, nobody working on it yet | Yes |
-| In Progress | En cours | Fix in progress | Yes |
-| Resolved | Résolu | Fix delivered and verified | No |
-
-Defaults: severity Medium, status Open. Any other value is rejected by the API (HTTP 400) and by the database (`CHECK` constraint). There is no "Closed" or "Rejected" status in the MVP: an issue created by mistake is deleted.
+Milestones are **To Do**, **In Progress**, **Done** or **Blocked**. Defaults: severity Medium, status Open. Any other value is rejected by the API (HTTP 400) and by the database (`CHECK` constraint). There is no "Closed" or "Rejected" status in the MVP: an issue created by mistake is deleted.
 
 ## Readiness Rules
 
@@ -139,17 +137,17 @@ Defaults: severity Medium, status Open. Any other value is rejected by the API (
 
 An open Critical issue therefore always blocks at least one client. Medium and Low issues never block.
 
-**Ready** only when no unresolved Critical issue affects the client, AND all milestones are Completed.
+**Ready** only when no unresolved Critical issue affects the client, AND all milestones are Done.
 
 Otherwise the client is **At Risk** (a milestone is late) or **In Progress**. This rule is computed in `app/readiness.py` and proven by `tests/test_tickets.py`. The original plan linked issues to milestones and had two states only; the team replaced it on November 10, 2026 (see [Decisions](#decisions)).
 
 ### Untriaged issues (fail-safe)
 
-A product teammate can log an issue before knowing which clients it affects (a general bug found in internal testing, for example). Leaving **Affected clients** empty saves it as **To triage** (À trier).
+A product teammate can log an issue before knowing which clients it affects (a general bug found in internal testing, for example). Leaving **Affected clients** empty saves it as **To triage**.
 
 | Untriaged issue | Effect on readiness |
 | --- | --- |
-| Open **Critical** | **Every** client is Not Ready, with the reason "critical issue not triaged, to link to affected clients" |
+| Open **Critical** | **Every** client is Not Ready, with the reason “untriaged critical issue, to be linked to the affected clients” |
 | Medium, Low, or Resolved | No effect |
 
 When in doubt, the rule blocks: an unknown scope never lets a client go live. Once the issue is linked to clients, only those clients stay blocked. The same applies if the last client of an open Critical issue is unlinked or deleted: the issue goes back to To triage and blocks everyone, so the blocker never disappears silently.
@@ -257,9 +255,9 @@ uvicorn app.main:app --reload
 - Tests: `python -m pytest` (33 tests; each test uses a temporary database, never `data/careops.db`)
 - Contributors only: `git config core.hooksPath .githooks` turns on the hook that blocks committed secrets.
 
-The database (`data/careops.db`) is created on first start and filled with fictional demo data from `data/seed.json`: three clients, one Not Ready, one At Risk and one Ready. The **Réinitialiser la démo** button restores it.
+The database (`data/careops.db`) is created on first start and filled with fictional demo data from `data/seed.json`: three clients, one Not Ready, one At Risk and one Ready. The **Reset demo** button restores it.
 
-These steps were checked from a fresh clone on November 11, 2026: the page and `/docs` load, the demo data appears, all 33 tests pass, and without a key the Claude buttons answer "IA indisponible : ANTHROPIC_API_KEY manquante dans .env."
+These steps were checked from a fresh clone on November 11, 2026: the page and `/docs` load, the demo data appears, all 33 tests pass, and without a key the Claude buttons answer “AI unavailable: ANTHROPIC_API_KEY is missing from .env.”
 
 ## Environment Variables
 
@@ -273,7 +271,7 @@ CAREOPS_TZ=America/New_York
 # CAREOPS_HOLIDAYS=2026-11-26,2026-12-25
 ```
 
-Without a key the application works normally; only the Claude buttons return an error. `CAREOPS_TZ` sets the time zone used for "today" and for issue creation dates, whatever the server's own time zone (Render runs in UTC). `CAREOPS_HOLIDAYS` sets the holidays skipped by the triage deadline: unset means US federal holidays, empty means none (only weekends are skipped), and a comma-separated list of `YYYY-MM-DD` dates means only those days. An invalid date stops the server at startup with a clear message. The active setting is visible: `/api/state` returns it as `triageCalendar`, and the **En retard de triage** tooltip states it (for example "week-ends et jours fériés fédéraux US exclus ; dates à l'heure de America/New_York"), so two machines set differently are easy to spot. `DATABASE_URL` will be added when we move to PostgreSQL.
+Without a key the application works normally; only the Claude buttons return an error. `CAREOPS_TZ` sets the time zone used for "today" and for issue creation dates, whatever the server's own time zone (Render runs in UTC). `CAREOPS_HOLIDAYS` sets the holidays skipped by the triage deadline: unset means US federal holidays, empty means none (only weekends are skipped), and a comma-separated list of `YYYY-MM-DD` dates means only those days. An invalid date stops the server at startup with a clear message. The active setting is visible: `/api/state` returns it as `triageCalendar`, and the **Overdue for triage** tooltip states it (for example “weekends and US federal holidays skipped; dates in America/New_York time”), so two machines set differently are easy to spot. `DATABASE_URL` will be added when we move to PostgreSQL.
 
 ## Security
 
@@ -295,7 +293,7 @@ To check your clone: `git check-ignore -v .env` must print a line from `.gitigno
 
 ## Component 1: Technical Issue Creation (Product Workspace)
 
-The **+ New issue** form (+ Nouveau problème) sends `POST /api/issues` to the FastAPI backend, which validates the fields (Pydantic) and stores the issue in SQLite. The list is read back from the database.
+The **+ New issue** form sends `POST /api/issues` to the FastAPI backend, which validates the fields (Pydantic) and stores the issue in SQLite. The list is read back from the database.
 
 **Success criterion:** an issue is created, stored, displayed, and retrieved after a page refresh, without duplication.
 
@@ -361,7 +359,7 @@ Outputs are plain text (no Markdown) with dates written out in full, because the
 - Untriaged Critical issue (no client yet) causes Not Ready for every client
 - Resolving critical issue removes blocker
 - Incomplete milestones prevent Ready
-- Completed milestones and no critical blockers produce Ready
+- Done milestones and no critical blockers produce Ready
 - Data remains consistent across both workspaces
 
 ## End-to-End Test Plan
@@ -371,12 +369,12 @@ Brahim and Sarah run this workflow with a fictional healthcare client before mer
 | # | Step | Expected result | Run 2026-11-05 |
 | --- | --- | --- | --- |
 | 1 | Sarah creates an implementation for a client and adds its required milestones | In Progress | ✅ |
-| 2 | Sarah marks every required milestone Completed | Ready (no blocker) | ✅ |
+| 2 | Sarah marks every required milestone Done | Ready (no blocker) | ✅ |
 | 3 | Brahim creates an issue in the Product workspace: severity Critical, status Open, linked to the client | Saved | ✅ |
 | 4 | Back in Sarah's workspace | Not Ready automatically, with the issue as the reason; other implementations unchanged | ✅ |
 | 5 | Brahim moves the issue from Open to Resolved | Saved | ✅ |
-| 6 | Readiness checked again | Ready again: all milestones Completed, no unresolved Critical issue | ✅ |
-| 7 | Edge case: Brahim creates a general Critical issue with no client | Visible as **To triage** (À trier) and blocks **every** implementation until it is linked to the affected clients or resolved ([fail-safe rule](#untriaged-issues-fail-safe)) | ✅ |
+| 6 | Readiness checked again | Ready again: all milestones Done, no unresolved Critical issue | ✅ |
+| 7 | Edge case: Brahim creates a general Critical issue with no client | Visible as **To triage** and blocks **every** implementation until it is linked to the affected clients or resolved ([fail-safe rule](#untriaged-issues-fail-safe)) | ✅ |
 | 8 | Both workspaces refreshed | All changes saved; readiness unchanged | ✅ |
 | 9 | Invalid client link, and calls straight to the API without the interface | Unknown client rejected (400); invalid severity rejected (400); readiness cannot be forced, it is always computed by the backend | ✅ |
 
@@ -384,11 +382,11 @@ Brahim and Sarah run this workflow with a fictional healthcare client before mer
 
 ### Milestone link test (November 10, 2026)
 
-An issue can now point to the milestone it delays. Client A = Bien-Être Queens (all milestones Completed), client B = CareFirst Brooklyn. Pass criterion: all four pass without changing readiness by hand.
+An issue can now point to the milestone it delays. Client A = Queens Wellness Care (all milestones Done), client B = CareFirst Brooklyn. Pass criterion: all four pass without changing readiness by hand.
 
 | # | Test | Result |
 | --- | --- | --- |
-| 1 | Open Critical issue linked to A's milestone "Test EVV avec l'État" | A Not Ready, reason "Export EVV refusé, étape « Test EVV avec l'État »"; the issue is linked to A automatically ✅ |
+| 1 | Open Critical issue linked to A's milestone “State EVV test” | A Not Ready, reason “…, milestone “State EVV test””; the issue is linked to A automatically ✅ |
 | 2 | Client B | Unchanged (At Risk, for its own late milestone) ✅ |
 | 3 | Issue resolved | A Ready again ✅ |
 | 4 | Page refreshed | Issue, milestone link and readiness preserved ✅ |
@@ -399,19 +397,19 @@ Run in the browser and as automated tests (`test_probleme_lie_a_une_etape_plan_e
 
 ## Presentation Demo
 
-Sarah proposed a fresh demo that shows both workspaces working together. Click **Réinitialiser la démo** first. The demo data then starts in three different states, one per client:
+Sarah proposed a fresh demo that shows both workspaces working together. Click **Reset demo** first. The demo data then starts in three different states, one per client:
 
-- **Horizon Soins à Domicile: Non prêt.** The reason names the issue and the milestone it delays (Export EVV, step « Test EVV avec l'État »).
-- **CareFirst Brooklyn: À risque.** One milestone is late.
-- **Bien-Être Queens: Prêt.** The walkthrough below starts here.
+- **Horizon Home Care: Not Ready.** The reason names the issue and the milestone it delays (EVV export, milestone “State EVV test”).
+- **CareFirst Brooklyn: At Risk.** One milestone is late.
+- **Queens Wellness Care: Ready.** The walkthrough below starts here.
 
 | Step | Who and where | Action | Expected result |
 | --- | --- | --- | --- |
-| 1 | Sarah, Implementation | Add the milestone « Vérification finale avant go-live » to Bien-Être Queens, due in the coming days | Queens: **En cours** (1 étape restante) |
-| 2 | Brahim, Product | Create a Critical issue « Pointages en double sur le portail aidants », feature Portail aidants, and choose that milestone under **Étape concernée** | Bien-Être Queens is linked automatically |
-| 3 | Sarah, Implementation | Look at Queens | **Non prêt**, and the reason names the issue and the milestone |
-| 4 | Brahim, Product | Set the issue to **Résolu** | Queens: **En cours** (the milestone is still open) |
-| 5 | Sarah, Implementation | Set the milestone to **Terminé** | Queens: **Prêt** |
+| 1 | Sarah, Implementation | Add the milestone “Final go-live check” to Queens Wellness Care, due in the coming days | Queens: **In Progress** (1 milestone left) |
+| 2 | Brahim, Product | Create a Critical issue “Duplicate clock-ins in the caregiver portal”, feature Caregiver Portal, and choose that milestone under **Milestone it delays** | Queens Wellness Care is linked automatically |
+| 3 | Sarah, Implementation | Look at Queens | **Not Ready**, and the reason names the issue and the milestone |
+| 4 | Brahim, Product | Set the issue to **Resolved** | Queens: **In Progress** (the milestone is still open) |
+| 5 | Sarah, Implementation | Set the milestone to **Done** | Queens: **Ready** |
 | 6 | Both | Refresh the page | Everything is still there |
 
 `test_demo_de_presentation` in `tests/test_tickets.py` runs the same steps against the API.
@@ -461,15 +459,15 @@ Agreed by Brahim and Sarah on November 10, 2026. They replace the original plan 
 | Topic | Decision | Why |
 | --- | --- | --- |
 | What an issue is linked to | One or more clients, or **All clients** (including clients added later); optionally the milestone it delays | One issue often affects several clients; no duplicates. The milestone shows *what* the issue holds back; blocking still goes through the client |
-| Readiness states | Not Ready, At Risk, In Progress, Ready, always with a reason in French | More useful than Ready / Not Ready alone |
+| Readiness states | Not Ready, At Risk, In Progress, Ready, always with a reason in plain words | More useful than Ready / Not Ready alone |
 | Incomplete milestone | In Progress; a late milestone makes the client At Risk; only a Blocked milestone makes it Not Ready | Unfinished work is not a crisis |
 | Critical issue with no link | Fail-safe: it blocks every client until triaged; Medium and Low issues never block | A Critical issue must never drop out of readiness because it is not linked yet |
 | Triage deadline | Same business day (weekends and holidays skipped, agency time zone; see the table below); triage identifies the affected clients, only resolving removes the block | Keeps false blocks short |
 | Frontend layout | One page with two tabs | Simpler navigation, no duplicated UI |
 | Data access | Built-in `sqlite3`, no SQLAlchemy | Enough for this scope, no extra dependency |
-| Interface language | French in the interface; code, database columns and identifiers in English | Matches the users; keeps the code maintainable |
+| Interface language | English everywhere: interface, stored values, demo data and Claude’s answers (changed on November 11, 2026 from French, for the Showcase audience; older French databases are converted on startup) | The Showcase audience reads English; one language keeps the code, data and demo consistent |
 
-Built by Sarah (PR #1, November 10): an open Critical issue still linked to no client is flagged **En retard de triage** next to **À trier**, in both workspaces. The server computes the flag (`overdueForTriage` in `/api/state`).
+Built by Sarah (PR #1, November 10): an open Critical issue still linked to no client is flagged **Overdue for triage** next to **To triage**, in both workspaces. The server computes the flag (`overdueForTriage` in `/api/state`).
 
 **Overdue triage counts business days** (agreed with Sarah, November 10). The deadline is the end of the business day the issue was created; an issue created on a weekend or a holiday is due on the next business day. The flag appears on the next business day after the deadline, never on a weekend or a holiday, so an issue is never flagged too early:
 

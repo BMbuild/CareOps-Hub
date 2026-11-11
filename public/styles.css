@@ -155,7 +155,7 @@ table input { min-width: 9rem; }
 .pill-overdue { background: #f3e5f5; color: #7b1fa2; border: 1px solid #ce93d8; }
 
 .sev { font-weight: 600; }
-.sev-Critique { color: var(--red); }
+.sev-Critical { color: var(--red); }
 
 /* Panneaux */
 .workspace { display: grid; gap: 16px; }

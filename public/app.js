@@ -1,10 +1,10 @@
 // Interface CareOps Hub : deux espaces qui lisent le même état partagé (/api/state).
 
-const SEVERITIES = ["Critique", "Moyenne", "Faible"];
-const ISSUE_STATES = ["Ouvert", "En cours", "Résolu"];
-const MILESTONE_STATES = ["À faire", "En cours", "Terminé", "Bloqué"];
-const FEATURE_STATES = ["Planifiée", "En développement", "Livrée"];
-const STATUS_CLASS = { "Non prêt": "s-not-ready", "À risque": "s-at-risk", "Prêt": "s-ready", "En cours": "s-in-progress" };
+const SEVERITIES = ["Critical", "Medium", "Low"];
+const ISSUE_STATES = ["Open", "In Progress", "Resolved"];
+const MILESTONE_STATES = ["To Do", "In Progress", "Done", "Blocked"];
+const FEATURE_STATES = ["Planned", "In Development", "Shipped"];
+const STATUS_CLASS = { "Not Ready": "s-not-ready", "At Risk": "s-at-risk", "Ready": "s-ready", "In Progress": "s-in-progress" };
 
 let state = null;
 let lastJson = "";
@@ -21,7 +21,7 @@ const options = (list, selected) =>
 function formatDate(iso) {
   if (!iso) return "—";
   const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 function toast(message, isError = false) {
@@ -41,7 +41,7 @@ async function api(method, url, body) {
   });
   if (res.status === 204) return null;
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.error || `Erreur ${res.status}`);
+  if (!res.ok) throw new Error(json.error || `Error ${res.status}`);
   return json;
 }
 
@@ -80,14 +80,14 @@ const clientName = (id) => state.clients.find((c) => c.id === id)?.name ?? "—"
 const featureName = (id) => state.features.find((f) => f.id === id)?.name ?? "—";
 const milestoneName = (id) => state.milestones.find((m) => m.id === id)?.name;
 // Étape retardée par le problème, affichée sous ses clients.
-const stepNote = (i) => (milestoneName(i.milestoneId) ? `<div class="sub">Étape : ${esc(milestoneName(i.milestoneId))}</div>` : "");
+const stepNote = (i) => (milestoneName(i.milestoneId) ? `<div class="sub">Milestone: ${esc(milestoneName(i.milestoneId))}</div>` : "");
 
 function render() {
   renderReadinessCards();
   renderProduct();
   renderImplementation();
   for (const btn of document.querySelectorAll("button.ai")) {
-    btn.title = state.aiEnabled ? "" : "Ajoutez ANTHROPIC_API_KEY dans .env pour activer Claude";
+    btn.title = state.aiEnabled ? "" : "Add ANTHROPIC_API_KEY to .env to turn on Claude";
   }
 }
 
@@ -97,7 +97,7 @@ function renderReadinessCards() {
       const r = state.readiness[c.id];
       return `<button class="card ${STATUS_CLASS[r.status]}" data-client="${esc(c.id)}">
         <div class="name">${esc(c.name)} <span class="pill">${esc(r.status)}</span></div>
-        <div class="golive">Go-live : ${formatDate(c.goLiveDate)}</div>
+        <div class="golive">Go-live: ${formatDate(c.goLiveDate)}</div>
         <div class="reason">${esc(r.reasons[0])}</div>
       </button>`;
     })
@@ -109,49 +109,49 @@ function renderProduct() {
   const st = $("#filter-state").value;
   const cl = $("#filter-client").value;
 
-  fillSelect("#filter-client", [["", "Tous les clients"], ...state.clients.map((c) => [c.id, c.name])], cl);
+  fillSelect("#filter-client", [["", "All clients"], ...state.clients.map((c) => [c.id, c.name])], cl);
 
-  const rank = (i) => (i.state === "Résolu" ? 10 : 0) + SEVERITIES.indexOf(i.severity);
+  const rank = (i) => (i.state === "Resolved" ? 10 : 0) + SEVERITIES.indexOf(i.severity);
   const issues = state.issues
     .filter((i) => (!sev || i.severity === sev) && (!st || i.state === st) && (!cl || affects(i, cl)))
     .sort((a, b) => rank(a) - rank(b));
 
   $("#issues-table").innerHTML = `
-    <thead><tr><th>Problème</th><th>Fonctionnalité</th><th>Clients touchés</th><th>Gravité</th><th>État</th><th></th></tr></thead>
+    <thead><tr><th>Issue</th><th>Feature</th><th>Affected clients</th><th>Severity</th><th>State</th><th></th></tr></thead>
     <tbody>${
       issues.length
         ? issues
             .map(
-              (i) => `<tr class="${i.state === "Résolu" ? "resolved" : ""}" data-id="${esc(i.id)}">
+              (i) => `<tr class="${i.state === "Resolved" ? "resolved" : ""}" data-id="${esc(i.id)}">
           <td><strong>${esc(i.title)}</strong><div class="sub">${esc(i.description)}</div></td>
           <td>${esc(featureName(i.featureId))}</td>
-          <td>${i.allClients ? `<span class="pill">Tous les clients</span>` : i.clientIds.map((id) => esc(clientName(id))).join("<br>") || untriagedTag(i)}${stepNote(i)}</td>
-          <td><select class="sev sev-${esc(i.severity)}" data-field="severity" aria-label="Gravité">${options(SEVERITIES, i.severity)}</select></td>
-          <td><select data-field="state" aria-label="État">${options(ISSUE_STATES, i.state)}</select></td>
-          <td><button class="icon" data-delete="issues" title="Supprimer">✕</button></td>
+          <td>${i.allClients ? `<span class="pill">All clients</span>` : i.clientIds.map((id) => esc(clientName(id))).join("<br>") || untriagedTag(i)}${stepNote(i)}</td>
+          <td><select class="sev sev-${esc(i.severity)}" data-field="severity" aria-label="Severity">${options(SEVERITIES, i.severity)}</select></td>
+          <td><select data-field="state" aria-label="State">${options(ISSUE_STATES, i.state)}</select></td>
+          <td><button class="icon" data-delete="issues" title="Delete">✕</button></td>
         </tr>`
             )
             .join("")
-        : `<tr><td colspan="6" class="empty">Aucun problème pour ces filtres.</td></tr>`
+        : `<tr><td colspan="6" class="empty">No issues match these filters.</td></tr>`
     }</tbody>`;
 
   $("#features-table").innerHTML = `
-    <thead><tr><th>Fonctionnalité</th><th>Description</th><th>Problèmes ouverts</th><th>Statut</th><th></th></tr></thead>
+    <thead><tr><th>Feature</th><th>Description</th><th>Open issues</th><th>Status</th><th></th></tr></thead>
     <tbody>${state.features
       .map((f) => {
-        const open = state.issues.filter((i) => i.featureId === f.id && i.state !== "Résolu").length;
+        const open = state.issues.filter((i) => i.featureId === f.id && i.state !== "Resolved").length;
         return `<tr data-id="${esc(f.id)}">
           <td><strong>${esc(f.name)}</strong></td>
           <td>${esc(f.description)}</td>
           <td>${open}</td>
-          <td><select data-field="status" aria-label="Statut">${options(FEATURE_STATES, f.status)}</select></td>
-          <td><button class="icon" data-delete="features" title="Supprimer">✕</button></td>
+          <td><select data-field="status" aria-label="Status">${options(FEATURE_STATES, f.status)}</select></td>
+          <td><button class="icon" data-delete="features" title="Delete">✕</button></td>
         </tr>`;
       })
       .join("")}</tbody>`;
 
   const form = $("#issue-form");
-  fillSelect(form.elements.featureId, [["", "— Aucune —"], ...state.features.map((f) => [f.id, f.name])], form.elements.featureId.value);
+  fillSelect(form.elements.featureId, [["", "— None —"], ...state.features.map((f) => [f.id, f.name])], form.elements.featureId.value);
   const checked = new Set([...form.querySelectorAll("input[name=clientIds]:checked")].map((x) => x.value));
   $("#issue-clients").innerHTML = state.clients
     .map((c) => `<label><input type="checkbox" name="clientIds" value="${esc(c.id)}"${checked.has(c.id) ? " checked" : ""}> ${esc(c.name)}</label>`)
@@ -161,7 +161,7 @@ function renderProduct() {
   // Étape concernée (facultatif), regroupée par client ; la choisir relie aussi son client côté serveur.
   const chosen = form.elements.milestoneId.value;
   form.elements.milestoneId.innerHTML =
-    `<option value="">— Aucune —</option>` +
+    `<option value="">— None —</option>` +
     state.clients
       .map((c) => {
         const steps = state.milestones.filter((m) => m.clientId === c.id);
@@ -183,7 +183,7 @@ function renderImplementation() {
   fillSelect("#client-select", state.clients.map((c) => [c.id, c.name]), selectedClientId);
   const client = state.clients.find((c) => c.id === selectedClientId);
   if (!client) {
-    $("#readiness-banner").innerHTML = "Aucun client. Ajoutez-en un pour commencer.";
+    $("#readiness-banner").innerHTML = "No clients yet. Add one to get started.";
     $("#milestones-table").innerHTML = "";
     $("#client-issues").innerHTML = "";
     return;
@@ -193,7 +193,7 @@ function renderImplementation() {
   const banner = $("#readiness-banner");
   banner.className = `banner ${STATUS_CLASS[r.status]}`;
   banner.innerHTML = `<div class="title">${esc(r.status)}</div>
-    <div>Go-live prévu : ${formatDate(client.goLiveDate)}</div>
+    <div>Planned go-live: ${formatDate(client.goLiveDate)}</div>
     <ul>${r.reasons.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`;
 
   const milestones = state.milestones
@@ -201,23 +201,23 @@ function renderImplementation() {
     .sort((a, b) => (a.dueDate || "9999").localeCompare(b.dueDate || "9999"));
 
   $("#milestones-table").innerHTML = `
-    <thead><tr><th>Étape</th><th>Échéance</th><th>Responsable</th><th>Statut</th><th>Point de blocage</th><th></th></tr></thead>
+    <thead><tr><th>Milestone</th><th>Due date</th><th>Owner</th><th>Status</th><th>Blocker</th><th></th></tr></thead>
     <tbody>${
       milestones.length
         ? milestones
             .map((m) => {
-              const late = m.status !== "Terminé" && m.dueDate && m.dueDate < state.today;
+              const late = m.status !== "Done" && m.dueDate && m.dueDate < state.today;
               return `<tr data-id="${esc(m.id)}">
           <td><strong>${esc(m.name)}</strong></td>
-          <td>${formatDate(m.dueDate)}${late ? `<div class="late">En retard</div>` : ""}</td>
-          <td><input data-field="owner" value="${esc(m.owner)}" aria-label="Responsable"></td>
-          <td><select data-field="status" aria-label="Statut">${options(MILESTONE_STATES, m.status)}</select></td>
-          <td><input data-field="blocker" value="${esc(m.blocker)}" placeholder="Aucun" aria-label="Point de blocage"></td>
-          <td><button class="icon" data-delete="milestones" title="Supprimer">✕</button></td>
+          <td>${formatDate(m.dueDate)}${late ? `<div class="late">Late</div>` : ""}</td>
+          <td><input data-field="owner" value="${esc(m.owner)}" aria-label="Owner"></td>
+          <td><select data-field="status" aria-label="Status">${options(MILESTONE_STATES, m.status)}</select></td>
+          <td><input data-field="blocker" value="${esc(m.blocker)}" placeholder="None" aria-label="Blocker"></td>
+          <td><button class="icon" data-delete="milestones" title="Delete">✕</button></td>
         </tr>`;
             })
             .join("")
-        : `<tr><td colspan="6" class="empty">Aucune étape pour ce client.</td></tr>`
+        : `<tr><td colspan="6" class="empty">No milestones for this client yet.</td></tr>`
     }</tbody>`;
 
   // Un Critique ouvert « À trier » bloque tous les clients : on le montre aussi ici.
@@ -225,19 +225,19 @@ function renderImplementation() {
   $("#client-issues").innerHTML = issues.length
     ? issues
         .map(
-          (i) => `<li class="${i.state === "Résolu" ? "resolved" : ""}">
+          (i) => `<li class="${i.state === "Resolved" ? "resolved" : ""}">
         <span class="sev sev-${esc(i.severity)}">${esc(i.severity)}</span>
-        <span>${esc(i.title)}${isUntriagedCritical(i) ? ` ${untriagedTag(i)}` : ""}${milestoneName(i.milestoneId) && affects(i, client.id) ? ` <span class="muted">· étape « ${esc(milestoneName(i.milestoneId))} »</span>` : ""}</span>
+        <span>${esc(i.title)}${isUntriagedCritical(i) ? ` ${untriagedTag(i)}` : ""}${milestoneName(i.milestoneId) && affects(i, client.id) ? ` <span class="muted">· milestone “${esc(milestoneName(i.milestoneId))}”</span>` : ""}</span>
         <span class="pill">${esc(i.state)}</span>
       </li>`
         )
         .join("")
-    : `<li class="muted">Aucun problème signalé pour ce client.</li>`;
+    : `<li class="muted">No issues reported for this client.</li>`;
 }
 
 // Problème sans client : « À trier ». S'il est Critique et ouvert, il bloque tous les clients jusqu'au tri.
 function isUntriagedCritical(i) {
-  return i.severity === "Critique" && i.state !== "Résolu" && i.clientIds.length === 0 && !i.allClients;
+  return i.severity === "Critical" && i.state !== "Resolved" && i.clientIds.length === 0 && !i.allClients;
 }
 
 // Calculé par le serveur (readiness.is_overdue_for_triage) : une seule source pour la règle.
@@ -248,7 +248,7 @@ function isOverdueForTriage(i) {
 // Règle active envoyée par le serveur (CAREOPS_HOLIDAYS, CAREOPS_TZ) : la même sur tous les postes.
 function overdueRule() {
   const calendar = state.triageCalendar;
-  const rule = "Non trié à la fin de son jour ouvré de création";
+  const rule = "Not triaged by the end of the business day it was created";
   return calendar ? `${rule} (${calendar.label})` : rule;
 }
 
@@ -258,10 +258,10 @@ function affects(i, clientId) {
 
 function untriagedTag(i) {
   const baseTag = isUntriagedCritical(i)
-    ? `<span class="pill s-not-ready" title="Bloque tous les clients tant qu'il n'est pas relié aux clients touchés">À trier · bloque tous les clients</span>`
-    : `<span class="pill">À trier</span>`;
+    ? `<span class="pill s-not-ready" title="Blocks every client until it is linked to the affected clients">To triage · blocks every client</span>`
+    : `<span class="pill">To triage</span>`;
   if (isOverdueForTriage(i)) {
-    return `${baseTag} <span class="pill pill-overdue" title="${overdueRule()}">En retard de triage</span>`;
+    return `${baseTag} <span class="pill pill-overdue" title="${overdueRule()}">Overdue for triage</span>`;
   }
   return baseTag;
 }
@@ -308,12 +308,12 @@ for (const [table, collection] of [["#issues-table", "issues"], ["#features-tabl
     e.target.blur();
     const body = { [field]: e.target.value };
     // Une étape Bloquée doit avoir une cause : on la demande si le champ est vide.
-    if (collection === "milestones" && field === "status" && e.target.value === "Bloqué") {
+    if (collection === "milestones" && field === "status" && e.target.value === "Blocked") {
       const current = e.target.closest("tr").querySelector('[data-field="blocker"]')?.value.trim();
       if (!current) {
-        const cause = prompt("Quelle est la cause du blocage ?")?.trim();
+        const cause = prompt("What is blocking this milestone?")?.trim();
         if (!cause) {
-          toast("Étape non bloquée : une cause est obligatoire.", true);
+          toast("Milestone not blocked: a cause is required.", true);
           refresh(true);
           return;
         }
@@ -321,13 +321,13 @@ for (const [table, collection] of [["#issues-table", "issues"], ["#features-tabl
       }
     }
     // Si le serveur refuse (ex. Critique sans client, étape bloquée sans cause), on réaffiche la valeur enregistrée.
-    mutate("PUT", `/api/${collection}/${id}`, body, "Enregistré").then((ok) => ok || refresh(true));
+    mutate("PUT", `/api/${collection}/${id}`, body, "Saved").then((ok) => ok || refresh(true));
   });
   el.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-delete]");
     if (!btn) return;
     const id = btn.closest("tr").dataset.id;
-    if (confirm("Supprimer cet élément ?")) mutate("DELETE", `/api/${collection}/${id}`, null, "Supprimé");
+    if (confirm("Delete this item?")) mutate("DELETE", `/api/${collection}/${id}`, null, "Deleted");
   });
 }
 
@@ -341,7 +341,7 @@ $("#issue-form").addEventListener("submit", async (e) => {
   const allClients = $("#issue-all-clients").checked;
   const clientIds = allClients ? [] : [...form.querySelectorAll("input[name=clientIds]:checked")].map((x) => x.value);
   const body = { ...formData(form), clientIds, allClients };
-  if (!(await mutate("POST", "/api/issues", body, "Problème créé"))) return;
+  if (!(await mutate("POST", "/api/issues", body, "Issue created"))) return;
   form.reset();
   syncAllClients();
   $("#severity-suggestion").hidden = true;
@@ -350,18 +350,18 @@ $("#issue-form").addEventListener("submit", async (e) => {
 
 $("#feature-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (await mutate("POST", "/api/features", formData(e.target), "Fonctionnalité créée")) e.target.reset();
+  if (await mutate("POST", "/api/features", formData(e.target), "Feature created")) e.target.reset();
 });
 
 $("#milestone-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const body = { ...formData(e.target), clientId: selectedClientId };
-  if (body.status === "Bloqué" && !body.blocker?.trim()) {
-    toast("Une étape bloquée doit avoir une cause : décrivez le point de blocage.", true);
+  if (body.status === "Blocked" && !body.blocker?.trim()) {
+    toast("A blocked milestone needs a cause: describe what is blocking it.", true);
     e.target.elements.blocker.focus();
     return;
   }
-  if (await mutate("POST", "/api/milestones", body, "Étape ajoutée")) e.target.reset();
+  if (await mutate("POST", "/api/milestones", body, "Milestone added")) e.target.reset();
 });
 
 $("#client-form").addEventListener("submit", async (e) => {
@@ -371,14 +371,14 @@ $("#client-form").addEventListener("submit", async (e) => {
     selectedClientId = client.id;
     await refresh(true);
     e.target.reset();
-    toast("Client ajouté");
+    toast("Client added");
   } catch (error) {
     toast(error.message, true);
   }
 });
 
 $("#reset").addEventListener("click", () => {
-  if (confirm("Remettre toutes les données de démo ? Vos changements seront perdus.")) mutate("POST", "/api/reset", null, "Données de démo restaurées");
+  if (confirm("Restore all demo data? Your changes will be lost.")) mutate("POST", "/api/reset", null, "Demo data restored");
 });
 
 // --- Claude --------------------------------------------------------------------
@@ -398,7 +398,7 @@ async function withBusy(button, label, fn) {
 }
 
 $("#suggest-severity").addEventListener("click", (e) =>
-  withBusy(e.target, "Claude réfléchit…", async () => {
+  withBusy(e.target, "Claude is thinking…", async () => {
     const form = $("#issue-form");
     const result = await api("POST", "/api/ai/severity", {
       // form.elements : form.title renverrait l'attribut title du formulaire, pas le champ.
@@ -408,20 +408,20 @@ $("#suggest-severity").addEventListener("click", (e) =>
     });
     form.elements.severity.value = result.severity;
     const note = $("#severity-suggestion");
-    note.textContent = `Suggestion : ${result.severity}. ${result.justification} Vous pouvez la changer avant de créer le problème.`;
+    note.textContent = `Suggestion: ${result.severity}. ${result.justification} You can change it before creating the issue.`;
     note.hidden = false;
   })
 );
 
 $("#ai-summary").addEventListener("click", (e) =>
-  withBusy(e.target, "Claude rédige…", async () => {
+  withBusy(e.target, "Claude is writing…", async () => {
     const { text } = await api("POST", "/api/ai/summary", { clientId: selectedClientId });
     $("#summary-output").value = text;
   })
 );
 
 $("#ai-email").addEventListener("click", (e) =>
-  withBusy(e.target, "Claude rédige…", async () => {
+  withBusy(e.target, "Claude is writing…", async () => {
     const { text } = await api("POST", "/api/ai/email", { clientId: selectedClientId, summary: $("#summary-output").value });
     $("#email-output").value = text;
   })
@@ -429,17 +429,17 @@ $("#ai-email").addEventListener("click", (e) =>
 
 $("#copy-email").addEventListener("click", async () => {
   const text = $("#email-output").value;
-  if (!text) return toast("Aucun e-mail à copier.", true);
+  if (!text) return toast("No email to copy.", true);
   await navigator.clipboard.writeText(text);
-  toast("E-mail copié");
+  toast("Email copied");
 });
 
 // --- Démarrage -----------------------------------------------------------------
 
-fillSelect("#filter-severity", [["", "Toutes les gravités"], ...SEVERITIES.map((s) => [s, s])], "");
-fillSelect("#filter-state", [["", "Tous les états"], ...ISSUE_STATES.map((s) => [s, s])], "");
-fillSelect($("#issue-form").elements.severity, SEVERITIES.map((s) => [s, s]), "Moyenne");
-fillSelect($("#issue-form").elements.state, ISSUE_STATES.map((s) => [s, s]), "Ouvert");
-fillSelect($("#milestone-form").elements.status, MILESTONE_STATES.map((s) => [s, s]), "À faire");
+fillSelect("#filter-severity", [["", "All severities"], ...SEVERITIES.map((s) => [s, s])], "");
+fillSelect("#filter-state", [["", "All states"], ...ISSUE_STATES.map((s) => [s, s])], "");
+fillSelect($("#issue-form").elements.severity, SEVERITIES.map((s) => [s, s]), "Medium");
+fillSelect($("#issue-form").elements.state, ISSUE_STATES.map((s) => [s, s]), "Open");
+fillSelect($("#milestone-form").elements.status, MILESTONE_STATES.map((s) => [s, s]), "To Do");
 
-refresh(true).catch((error) => toast(`Serveur injoignable : ${error.message}`, true));
+refresh(true).catch((error) => toast(`Cannot reach the server: ${error.message}`, true));

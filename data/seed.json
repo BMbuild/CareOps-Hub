@@ -1,22 +1,22 @@
 {
   "clients": [
-    { "id": "c1", "name": "Horizon Soins à Domicile", "goLiveDate": "2026-11-20" },
+    { "id": "c1", "name": "Horizon Home Care", "goLiveDate": "2026-11-20" },
     { "id": "c2", "name": "CareFirst Brooklyn", "goLiveDate": "2026-12-01" },
-    { "id": "c3", "name": "Bien-Être Queens", "goLiveDate": "2026-11-12" }
+    { "id": "c3", "name": "Queens Wellness Care", "goLiveDate": "2026-11-12" }
   ],
   "features": [
-    { "id": "f1", "name": "Export EVV", "description": "Envoi des visites vérifiées à l'agrégateur de l'État", "status": "Livrée" },
-    { "id": "f2", "name": "Planification des visites", "description": "Planning des aides à domicile et import des horaires", "status": "Livrée" },
-    { "id": "f3", "name": "Facturation Medicaid", "description": "Génération des lignes de facturation par visite", "status": "En développement" },
-    { "id": "f4", "name": "Portail aidants", "description": "Application des aides pour pointer et voir leur planning", "status": "Livrée" }
+    { "id": "f1", "name": "EVV Export", "description": "Sends verified visits to the State aggregator", "status": "Shipped" },
+    { "id": "f2", "name": "Visit Scheduling", "description": "Caregiver schedules and timetable import", "status": "Shipped" },
+    { "id": "f3", "name": "Medicaid Billing", "description": "Generates billing lines for each visit", "status": "In Development" },
+    { "id": "f4", "name": "Caregiver Portal", "description": "App where caregivers clock in and see their schedule", "status": "Shipped" }
   ],
   "issues": [
     {
       "id": "i1",
-      "title": "Export EVV rejeté par l'agrégateur de l'État",
-      "description": "Le fichier d'export est refusé : le format de la date de visite ne correspond pas à la spécification de l'État.",
-      "severity": "Critique",
-      "state": "Ouvert",
+      "title": "EVV export rejected by the State aggregator",
+      "description": "The export file is refused: the visit date format does not match the State specification.",
+      "severity": "Critical",
+      "state": "Open",
       "featureId": "f1",
       "clientIds": ["c1"],
       "milestoneId": "m3",
@@ -24,68 +24,68 @@
     },
     {
       "id": "i2",
-      "title": "Doublons de visites après import du planning",
-      "description": "Certaines visites apparaissent deux fois après l'import CSV, ce qui fausse les heures des aides.",
-      "severity": "Moyenne",
-      "state": "En cours",
+      "title": "Duplicate visits after schedule import",
+      "description": "Some visits appear twice after the CSV import, which skews caregiver hours.",
+      "severity": "Medium",
+      "state": "In Progress",
       "featureId": "f2",
       "clientIds": ["c2"],
       "createdAt": "2026-10-25"
     },
     {
       "id": "i3",
-      "title": "Code de facturation manquant pour les visites de nuit",
-      "description": "Les visites entre 22 h et 6 h n'ont pas de code de facturation ; un ajout manuel est possible.",
-      "severity": "Moyenne",
-      "state": "Ouvert",
+      "title": "Missing billing code for overnight visits",
+      "description": "Visits between 10 p.m. and 6 a.m. have no billing code; it can be added by hand.",
+      "severity": "Medium",
+      "state": "Open",
       "featureId": "f3",
       "clientIds": ["c1", "c2"],
       "createdAt": "2026-10-30"
     },
     {
       "id": "i4",
-      "title": "Lenteur du portail aidants le lundi matin",
-      "description": "Le chargement du planning prend 8 à 10 secondes entre 7 h et 8 h le lundi.",
-      "severity": "Faible",
-      "state": "Ouvert",
+      "title": "Caregiver portal slow on Monday mornings",
+      "description": "The schedule takes 8 to 10 seconds to load between 7 and 8 a.m. on Mondays.",
+      "severity": "Low",
+      "state": "Open",
       "featureId": "f4",
       "clientIds": ["c2"],
       "createdAt": "2026-11-02"
     },
     {
       "id": "i5",
-      "title": "Erreur de fuseau horaire sur les pointages",
-      "description": "Les pointages étaient enregistrés en UTC au lieu de l'heure locale.",
-      "severity": "Critique",
-      "state": "Résolu",
+      "title": "Time zone error on clock-ins",
+      "description": "Clock-ins were stored in UTC instead of local time.",
+      "severity": "Critical",
+      "state": "Resolved",
       "featureId": "f1",
       "clientIds": ["c3"],
       "createdAt": "2026-10-10"
     },
     {
       "id": "i6",
-      "title": "Libellés tronqués dans l'application mobile",
-      "description": "Les noms de patients longs sont coupés sur les petits écrans.",
-      "severity": "Faible",
-      "state": "Résolu",
+      "title": "Truncated labels in the mobile app",
+      "description": "Long patient names are cut off on small screens.",
+      "severity": "Low",
+      "state": "Resolved",
       "featureId": "f4",
       "clientIds": ["c3"],
       "createdAt": "2026-10-15"
     }
   ],
   "milestones": [
-    { "id": "m1", "clientId": "c1", "name": "Réunion de lancement", "dueDate": "2026-10-06", "owner": "Sarah", "status": "Terminé", "blocker": "" },
-    { "id": "m2", "clientId": "c1", "name": "Migration des données patients", "dueDate": "2026-10-20", "owner": "Équipe données", "status": "Terminé", "blocker": "" },
-    { "id": "m3", "clientId": "c1", "name": "Test EVV avec l'État", "dueDate": "2026-11-06", "owner": "Sarah", "status": "Bloqué", "blocker": "L'export EVV est rejeté par l'agrégateur ; en attente d'un correctif Produit." },
-    { "id": "m4", "clientId": "c1", "name": "Formation des coordinateurs", "dueDate": "2026-11-14", "owner": "Équipe formation", "status": "À faire", "blocker": "" },
+    { "id": "m1", "clientId": "c1", "name": "Kickoff meeting", "dueDate": "2026-10-06", "owner": "Sarah", "status": "Done", "blocker": "" },
+    { "id": "m2", "clientId": "c1", "name": "Patient data migration", "dueDate": "2026-10-20", "owner": "Data team", "status": "Done", "blocker": "" },
+    { "id": "m3", "clientId": "c1", "name": "State EVV test", "dueDate": "2026-11-06", "owner": "Sarah", "status": "Blocked", "blocker": "The EVV export is rejected by the aggregator; waiting for a Product fix." },
+    { "id": "m4", "clientId": "c1", "name": "Care coordinator training", "dueDate": "2026-11-14", "owner": "Training team", "status": "To Do", "blocker": "" },
 
-    { "id": "m5", "clientId": "c2", "name": "Réunion de lancement", "dueDate": "2026-10-13", "owner": "Sarah", "status": "Terminé", "blocker": "" },
-    { "id": "m6", "clientId": "c2", "name": "Configuration des plannings", "dueDate": "2026-10-30", "owner": "Sarah", "status": "En cours", "blocker": "" },
-    { "id": "m7", "clientId": "c2", "name": "Test de facturation Medicaid", "dueDate": "2026-11-18", "owner": "Équipe facturation", "status": "À faire", "blocker": "" },
-    { "id": "m8", "clientId": "c2", "name": "Liste de contrôle go-live", "dueDate": "2026-11-28", "owner": "Sarah", "status": "À faire", "blocker": "" },
+    { "id": "m5", "clientId": "c2", "name": "Kickoff meeting", "dueDate": "2026-10-13", "owner": "Sarah", "status": "Done", "blocker": "" },
+    { "id": "m6", "clientId": "c2", "name": "Schedule setup", "dueDate": "2026-10-30", "owner": "Sarah", "status": "In Progress", "blocker": "" },
+    { "id": "m7", "clientId": "c2", "name": "Medicaid billing test", "dueDate": "2026-11-18", "owner": "Billing team", "status": "To Do", "blocker": "" },
+    { "id": "m8", "clientId": "c2", "name": "Go-live checklist", "dueDate": "2026-11-28", "owner": "Sarah", "status": "To Do", "blocker": "" },
 
-    { "id": "m9", "clientId": "c3", "name": "Réunion de lancement", "dueDate": "2026-09-22", "owner": "Sarah", "status": "Terminé", "blocker": "" },
-    { "id": "m10", "clientId": "c3", "name": "Test EVV avec l'État", "dueDate": "2026-10-20", "owner": "Sarah", "status": "Terminé", "blocker": "" },
-    { "id": "m11", "clientId": "c3", "name": "Formation des coordinateurs", "dueDate": "2026-11-03", "owner": "Équipe formation", "status": "Terminé", "blocker": "" }
+    { "id": "m9", "clientId": "c3", "name": "Kickoff meeting", "dueDate": "2026-09-22", "owner": "Sarah", "status": "Done", "blocker": "" },
+    { "id": "m10", "clientId": "c3", "name": "State EVV test", "dueDate": "2026-10-20", "owner": "Sarah", "status": "Done", "blocker": "" },
+    { "id": "m11", "clientId": "c3", "name": "Care coordinator training", "dueDate": "2026-11-03", "owner": "Training team", "status": "Done", "blocker": "" }
   ]
 }

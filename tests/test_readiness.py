@@ -14,51 +14,51 @@ def status(state: dict, client_id: str) -> str:
 
 
 def test_probleme_critique_ouvert_rend_non_pret():
-    assert status(SEED, "c1") == "Non prêt"
+    assert status(SEED, "c1") == "Not Ready"
 
 
 def test_resoudre_le_critique_ne_suffit_pas_si_une_etape_est_bloquee():
     state = copy.deepcopy(SEED)
-    next(i for i in state["issues"] if i["id"] == "i1")["state"] = "Résolu"
-    assert status(state, "c1") == "Non prêt"
-    next(m for m in state["milestones"] if m["id"] == "m3")["status"] = "En cours"
-    assert status(state, "c1") == "En cours"
+    next(i for i in state["issues"] if i["id"] == "i1")["state"] = "Resolved"
+    assert status(state, "c1") == "Not Ready"
+    next(m for m in state["milestones"] if m["id"] == "m3")["status"] = "In Progress"
+    assert status(state, "c1") == "In Progress"
 
 
 def test_etape_en_retard_donne_a_risque():
-    assert status(SEED, "c2") == "À risque"
+    assert status(SEED, "c2") == "At Risk"
 
 
 def test_probleme_moyen_ne_bloque_pas():
     state = copy.deepcopy(SEED)
-    next(m for m in state["milestones"] if m["id"] == "m6")["status"] = "Terminé"
-    assert status(state, "c2") == "En cours"
+    next(m for m in state["milestones"] if m["id"] == "m6")["status"] = "Done"
+    assert status(state, "c2") == "In Progress"
 
 
 def test_tout_termine_donne_pret():
-    assert status(SEED, "c3") == "Prêt"
+    assert status(SEED, "c3") == "Ready"
 
 
 def test_raisons_au_pluriel():
     state = copy.deepcopy(SEED)
-    state["issues"].append({"id": "x", "title": "Autre", "severity": "Critique", "state": "Ouvert", "clientIds": ["c1"]})
+    state["issues"].append({"id": "x", "title": "Autre", "severity": "Critical", "state": "Open", "clientIds": ["c1"]})
     client = next(c for c in state["clients"] if c["id"] == "c1")
     reason = compute_readiness(client, state, TODAY)["reasons"][0]
-    assert reason.startswith("2 problèmes critiques ouverts")
+    assert reason.startswith("2 open critical issues")
 
 
 def test_en_retard_de_tri():
     """Signal de Sarah : un Critique ouvert sans client, non trié à la fin de son jour ouvré, est en retard de tri."""
     from app.readiness import is_overdue_for_triage
 
-    base = {"severity": "Critique", "state": "Ouvert", "clientIds": [], "allClients": False, "createdAt": "2026-11-03"}
+    base = {"severity": "Critical", "state": "Open", "clientIds": [], "allClients": False, "createdAt": "2026-11-03"}
     assert is_overdue_for_triage(base, TODAY)  # créé la veille, toujours sans client
     for change in (
         {"createdAt": TODAY},  # créé aujourd'hui : encore dans le délai
         {"clientIds": ["c1"]},  # trié
         {"allClients": True},  # trié : touche tout le monde
-        {"state": "Résolu"},
-        {"severity": "Moyenne"},
+        {"state": "Resolved"},
+        {"severity": "Medium"},
         {"createdAt": ""},
     ):
         assert not is_overdue_for_triage({**base, **change}, TODAY), change
@@ -69,7 +69,7 @@ def test_retard_de_tri_en_jours_ouvres():
     from app.readiness import is_overdue_for_triage
 
     def overdue(created, today):
-        issue = {"severity": "Critique", "state": "Ouvert", "clientIds": [], "allClients": False, "createdAt": created}
+        issue = {"severity": "Critical", "state": "Open", "clientIds": [], "allClients": False, "createdAt": created}
         return is_overdue_for_triage(issue, today)
 
     friday, saturday, sunday, monday, tuesday = "2026-11-06", "2026-11-07", "2026-11-08", "2026-11-09", "2026-11-10"
@@ -89,7 +89,7 @@ def test_retard_de_tri_en_jours_ouvres():
 def _overdue(created, today):
     from app.readiness import is_overdue_for_triage
 
-    issue = {"severity": "Critique", "state": "Ouvert", "clientIds": [], "allClients": False, "createdAt": created}
+    issue = {"severity": "Critical", "state": "Open", "clientIds": [], "allClients": False, "createdAt": created}
     return is_overdue_for_triage(issue, today)
 
 
@@ -146,7 +146,7 @@ def test_api_date_les_problemes_dans_le_fuseau_de_l_agence(monkeypatch):
 
     monkeypatch.setattr(business_days, "datetime", FrozenClock)
     with TestClient(app) as client:
-        issue = client.post("/api/issues", json={"title": "Bug du soir", "severity": "Critique"}).json()
+        issue = client.post("/api/issues", json={"title": "Bug du soir", "severity": "Critical"}).json()
         assert issue["createdAt"] == "2026-11-05"
         flags = {i["id"]: i["overdueForTriage"] for i in client.get("/api/state").json()["issues"]}
         assert flags[issue["id"]] is False
