@@ -16,6 +16,18 @@ Built as a two-week MVP for the Pursuit L2 Cycle 4 Capstone, inspired by the "Pr
 
 The full feature list per workspace is in [MVP Features](#mvp-features).
 
+## Demo
+
+![CareOps Hub, Product workspace: readiness cards show Horizon Soins à Domicile as Non prêt because of an open critical EVV issue on the milestone « Test EVV avec l'État », CareFirst Brooklyn as À risque because of a late milestone, and Bien-Être Queens as Prêt; below, the technical issues table with severity, state and affected clients](docs/screenshots/readiness-product.png)
+
+*Product workspace (Brahim): every client shows a readiness status with its reason. Horizon is **Non prêt** because a critical issue, a rejected EVV export, delays its « Test EVV avec l'État » milestone; CareFirst is **À risque** because a milestone is late; Queens is **Prêt**.*
+
+![CareOps Hub, Implementation workspace for Horizon Soins à Domicile: a red Non prêt banner lists the open critical issue and the blocked milestone, followed by the milestone table with owner, status and blocker, and the read-only list of technical issues affecting this client](docs/screenshots/implementation.png)
+
+*Implementation workspace (Sarah), same data: the banner explains why Horizon is not ready, the blocked milestone states its cause, and the issues logged by Product appear read-only.*
+
+Captured on November 11, 2026 from the demo data (click **Réinitialiser la démo** to get the same view). The interface is in French for its users.
+
 ## Project Team
 
 | Partner | Workspace |
