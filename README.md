@@ -1,10 +1,20 @@
 # CareOps Hub
 
-When a home-care agency moves to new software, an implementation project manager has to decide when it is ready to go live. Today that call is made by hand from two separate places: the milestones in the project plan, and the technical issues in the product team's tracker. A critical bug, such as a rejected EVV export, can slip through to go-live, and the agency pays for it in missed visits and billing errors.
+When a home-care agency moves to new software, an implementation project manager has to decide when it is ready to go live. Today that call is made by hand, from two separate places: the milestones in the project plan, and the technical issues in the product team's tracker. A critical bug, such as a rejected EVV export, can slip through to go-live, and the agency pays for it in missed visits and billing errors.
 
 CareOps Hub puts both in one place. The Product team logs issues and links them to the clients they affect, the Implementation team tracks each client's milestones, and every client gets a readiness status (Not Ready, At Risk, In Progress or Ready) with the reason in plain words. No client goes live with an open critical issue.
 
 Built as a two-week MVP for the Pursuit L2 Cycle 4 Capstone, inspired by the "Project Manager, Client Implementations" role at HHAeXchange.
+
+## Key Features
+
+- **Issue tracking (Product workspace):** log technical issues with a severity and link them to the clients they affect, to **All clients**, or leave them **To triage**; optionally link the milestone an issue delays.
+- **Milestone tracking (Implementation workspace):** each client's go-live milestones with owner, due date and status; a Blocked milestone must state its cause.
+- **Readiness status with a reason:** every client is **Not Ready**, **At Risk**, **In Progress** or **Ready**, recomputed on every change and always explained in plain words (the interface is in French, for example « 1 problème critique ouvert (Export EVV rejeté…) »).
+- **Go-live guard:** a client with an open Critical issue can never show as Ready, and a Critical issue not yet linked to any client blocks every client until it is triaged; it is flagged overdue if not triaged the same business day.
+- **AI drafts, human decides:** Claude suggests a severity, summarizes readiness and drafts the client update email; a person reviews before anything is saved or sent.
+
+The full feature list per workspace is in [MVP Features](#mvp-features).
 
 ## Project Team
 
