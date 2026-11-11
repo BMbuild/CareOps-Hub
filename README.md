@@ -240,22 +240,26 @@ careops-hub/
 
 ## Installation
 
+Requirements: Python 3.10 or newer (tested with 3.14) and Git. An Anthropic API key is optional: without it the app works fully, and only the three Claude buttons return a clear error.
+
 ```bash
 git clone https://github.com/BMbuild/CareOps-Hub.git
 cd CareOps-Hub
 python3 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
-cp .env.example .env               # then add your own API key
-git config core.hooksPath .githooks
+cp .env.example .env               # Windows: copy .env.example .env; then add your API key (optional)
 uvicorn app.main:app --reload
 ```
 
-- Application: http://localhost:8000
+- Application: http://localhost:8000 (if port 8000 is taken, add `--port 8001` and open that port instead)
 - API documentation: http://localhost:8000/docs
-- Tests: `python -m pytest` (each test uses a temporary database, never `data/careops.db`)
+- Tests: `python -m pytest` (33 tests; each test uses a temporary database, never `data/careops.db`)
+- Contributors only: `git config core.hooksPath .githooks` turns on the hook that blocks committed secrets.
 
-The database is created on first start with fictional demo data. The **Reset demo** button (Réinitialiser la démo) restores it.
+The database (`data/careops.db`) is created on first start and filled with fictional demo data from `data/seed.json`: three clients, one Not Ready, one At Risk and one Ready. The **Réinitialiser la démo** button restores it.
+
+These steps were checked from a fresh clone on November 11, 2026: the page and `/docs` load, the demo data appears, all 33 tests pass, and without a key the Claude buttons answer "IA indisponible : ANTHROPIC_API_KEY manquante dans .env."
 
 ## Environment Variables
 
