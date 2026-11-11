@@ -1,8 +1,10 @@
 # CareOps Hub
 
-CareOps Hub is a lightweight healthcare implementation management platform designed to connect technical issue tracking with implementation project progress.
+When a home-care agency moves to new software, an implementation project manager has to decide when it is ready to go live. Today that call is made by hand from two separate places: the milestones in the project plan, and the technical issues in the product team's tracker. A critical bug, such as a rejected EVV export, can slip through to go-live, and the agency pays for it in missed visits and billing errors.
 
-Built as a two-week MVP for the Pursuit L2 Cycle 4 Capstone Project, CareOps Hub helps implementation teams identify blockers, track milestones, and assess deployment readiness through a shared system. The project is inspired by the "Project Manager, Client Implementations" role at HHAeXchange.
+CareOps Hub puts both in one place. The Product team logs issues and links them to the clients they affect, the Implementation team tracks each client's milestones, and every client gets a readiness status (Not Ready, At Risk, In Progress or Ready) with the reason in plain words. No client goes live with an open critical issue.
+
+Built as a two-week MVP for the Pursuit L2 Cycle 4 Capstone, inspired by the "Project Manager, Client Implementations" role at HHAeXchange.
 
 ## Project Team
 
