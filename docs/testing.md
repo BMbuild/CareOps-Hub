@@ -2,7 +2,7 @@
 
 Back to the [README](../README.md).
 
-Run the automated tests with `python -m pytest` (35 tests). Each test uses a temporary database, never `data/careops.db`. Test names are in French because they were written before the interface switched to English.
+Run the automated tests with `python -m pytest` (48 tests). Each test uses a temporary database, never `data/careops.db`. Test names are in French because they were written before the interface switched to English.
 
 ## Presentation demo
 
@@ -78,7 +78,15 @@ Claude never changes data: a person reviews every suggestion. Outputs are plain 
 | Readiness summary | Implementation | 4 sentences matching the data: blocker, go-live risk, next action and owner |
 | Client update email | Implementation | Starts with a subject line, honest about the go-live date, no internal jargon |
 
-These tests were run in French; on November 11, 2026, one severity suggestion was checked again in English.
+These tests were run in French. On November 11, 2026, after the switch to English, all three were run again against the live API: the severity suggestion, the readiness summary for Horizon Home Care (plain English, dates written out, correct facts such as nine days left before go-live) and the client email (148 words, starts with “Subject:”, no Markdown, explains EVV to the client).
+
+`tests/test_ai.py` checks the Claude features with a fake client, so no real call is made:
+
+- a severity Claude invents (for example “High”) is rejected; it is the only Claude output that goes into the data;
+- a refusal, an empty answer, an invalid key, a rate limit, a server error or no connection each give a clear message (HTTP 502);
+- without a key, all three features answer 503; empty titles and unknown clients are rejected before calling Claude;
+- Claude receives the readiness status and reason computed by the app, and the email receives the approved summary;
+- `CAREOPS_MODEL` is read on each call, so the value in `.env` is used.
 
 ## Fresh-clone check (November 11, 2026)
 

@@ -11,7 +11,12 @@ import anthropic
 
 from .readiness import SEVERITIES, affects, is_late
 
-MODEL = os.getenv("CAREOPS_MODEL") or "claude-opus-5-5"  # modèle réglable dans .env
+DEFAULT_MODEL = "claude-opus-5-5"
+
+
+def model() -> str:
+    """Modèle lu à chaque appel : .env est chargé par main.py après l'import de ce module."""
+    return os.getenv("CAREOPS_MODEL") or DEFAULT_MODEL
 
 SYSTEM = """You are the assistant in CareOps Hub, a tool that tracks client implementations for a home-care software vendor.
 Answer in English, briefly, factually and professionally.
@@ -35,7 +40,7 @@ def _ask(prompt: str, fmt: dict | None = None) -> str:
         output_config["format"] = fmt
     try:
         response = _client().beta.messages.create(
-            model=MODEL,
+            model=model(),
             max_tokens=16000,
             output_config=output_config,
             # Si un filtre de sécurité refuse la demande, l'API relance sur un modèle de repli.

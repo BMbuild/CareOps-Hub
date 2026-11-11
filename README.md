@@ -49,7 +49,7 @@ uvicorn app.main:app --reload
 **What you should see.** Open http://localhost:8000: three client cards at the top, one Not Ready (Horizon Home Care), one At Risk (CareFirst Brooklyn) and one Ready (Queens Wellness Care). The **Reset demo** button restores this demo data at any time. If port 8000 is taken, add `--port 8001` to the last command and open that port instead.
 
 - API documentation: http://localhost:8000/docs
-- Tests: `python -m pytest` (35 tests)
+- Tests: `python -m pytest` (48 tests)
 - Contributors: `git config core.hooksPath .githooks` turns on the hook that blocks committed secrets.
 
 ## How readiness works
@@ -149,7 +149,7 @@ The interface, data and documentation are in English. Code comments, test names 
 
 ## Status and next steps (November 11, 2026)
 
-Done: both workspaces on FastAPI and SQLite, the readiness and triage rules, the three Claude features, the English interface, and the presentation demo, all covered by 35 automated tests.
+Done: both workspaces on FastAPI and SQLite, the readiness and triage rules, the three Claude features, the English interface, and the presentation demo, all covered by 48 automated tests.
 
 1. Rehearse the [presentation demo](docs/testing.md#presentation-demo) together, with Sarah driving the Implementation workspace; it doubles as the end-to-end rerun.
 2. Deploy on Render, and decide whether production uses PostgreSQL or stays on SQLite.
