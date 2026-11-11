@@ -224,6 +224,12 @@ legend { font-size: 0.88rem; color: var(--muted); padding: 0 4px; }
 .ai-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
 .ai-output { display: grid; gap: 4px; font-size: 0.88rem; color: var(--muted); margin-bottom: 10px; }
 
+#ask { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); box-shadow: var(--shadow); padding: 20px; width: min(440px, calc(100vw - 32px)); }
+#ask::backdrop { background: rgba(18, 48, 46, 0.35); }
+.ask-form { display: grid; gap: 14px; }
+.ask-form p { margin: 0; font-weight: 600; }
+.ask-form input { width: 100%; box-sizing: border-box; }
+.ask-actions { display: flex; justify-content: flex-end; gap: 8px; }
 #toast {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
   background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 8px; max-width: 90vw;

@@ -146,6 +146,17 @@
   </main>
 
   <div id="toast" role="status" aria-live="polite" hidden></div>
+  <!-- Confirmation drawn in the page: native confirm()/prompt() are blocked in some browsers and screen recorders. -->
+  <dialog id="ask" aria-labelledby="ask-text">
+    <form method="dialog" class="ask-form">
+      <p id="ask-text"></p>
+      <input id="ask-input" maxlength="1000" aria-labelledby="ask-text" hidden>
+      <div class="ask-actions">
+        <button type="submit" value="cancel" class="ghost">Cancel</button>
+        <button type="submit" value="ok" id="ask-ok">OK</button>
+      </div>
+    </form>
+  </dialog>
   <script src="app.js" type="module"></script>
 </body>
 </html>

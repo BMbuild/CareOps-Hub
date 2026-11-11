@@ -271,6 +271,30 @@ function fillSelect(target, pairs, selected) {
   el.innerHTML = pairs.map(([v, label]) => `<option value="${esc(v)}"${v === selected ? " selected" : ""}>${esc(label)}</option>`).join("");
 }
 
+// Confirmation dans la page (remplace confirm()/prompt(), bloqués par certains navigateurs).
+// Renvoie true/false, ou le texte saisi (null si annulé) quand withInput est vrai.
+function ask(message, { okLabel = "OK", withInput = false } = {}) {
+  const dialog = $("#ask");
+  const input = $("#ask-input");
+  $("#ask-text").textContent = message;
+  $("#ask-ok").textContent = okLabel;
+  input.hidden = !withInput;
+  input.value = "";
+  return new Promise((resolve) => {
+    dialog.addEventListener(
+      "close",
+      () => {
+        const ok = dialog.returnValue === "ok";
+        resolve(withInput ? (ok ? input.value.trim() || null : null) : ok);
+      },
+      { once: true }
+    );
+    dialog.returnValue = "";
+    dialog.showModal();
+    (withInput ? input : $("#ask-ok")).focus();
+  });
+}
+
 // --- Événements ----------------------------------------------------------------
 
 function switchTab(name) {
@@ -301,7 +325,7 @@ $("#client-select").addEventListener("change", (e) => {
 // Modifications en ligne dans les tableaux (sélecteurs et champs texte).
 for (const [table, collection] of [["#issues-table", "issues"], ["#features-table", "features"], ["#milestones-table", "milestones"]]) {
   const el = $(table);
-  el.addEventListener("change", (e) => {
+  el.addEventListener("change", async (e) => {
     const field = e.target.dataset.field;
     const id = e.target.closest("tr")?.dataset.id;
     if (!field || !id) return;
@@ -311,7 +335,7 @@ for (const [table, collection] of [["#issues-table", "issues"], ["#features-tabl
     if (collection === "milestones" && field === "status" && e.target.value === "Blocked") {
       const current = e.target.closest("tr").querySelector('[data-field="blocker"]')?.value.trim();
       if (!current) {
-        const cause = prompt("What is blocking this milestone?")?.trim();
+        const cause = await ask("What is blocking this milestone?", { okLabel: "Block milestone", withInput: true });
         if (!cause) {
           toast("Milestone not blocked: a cause is required.", true);
           refresh(true);
@@ -327,7 +351,7 @@ for (const [table, collection] of [["#issues-table", "issues"], ["#features-tabl
     const btn = e.target.closest("[data-delete]");
     if (!btn) return;
     const id = btn.closest("tr").dataset.id;
-    if (confirm("Delete this item?")) mutate("DELETE", `/api/${collection}/${id}`, null, "Deleted");
+    ask("Delete this item?", { okLabel: "Delete" }).then((ok) => ok && mutate("DELETE", `/api/${collection}/${id}`, null, "Deleted"));
   });
 }
 
@@ -378,7 +402,7 @@ $("#client-form").addEventListener("submit", async (e) => {
 });
 
 $("#reset").addEventListener("click", () => {
-  if (confirm("Restore all demo data? Your changes will be lost.")) mutate("POST", "/api/reset", null, "Demo data restored");
+  ask("Restore all demo data? Your changes will be lost.", { okLabel: "Reset demo" }).then((ok) => ok && mutate("POST", "/api/reset", null, "Demo data restored"));
 });
 
 // --- Claude --------------------------------------------------------------------
