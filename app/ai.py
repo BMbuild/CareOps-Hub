@@ -4,13 +4,14 @@ Claude ne modifie jamais les données : il renvoie une suggestion que l'utilisat
 """
 
 import json
+import os
 from functools import cache
 
 import anthropic
 
 from .readiness import SEVERITIES, affects, is_late
 
-MODEL = "claude-opus-5-5"
+MODEL = os.getenv("CAREOPS_MODEL") or "claude-opus-5-5"  # modèle réglable dans .env
 
 SYSTEM = """You are the assistant in CareOps Hub, a tool that tracks client implementations for a home-care software vendor.
 Answer in English, briefly, factually and professionally.
