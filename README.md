@@ -167,13 +167,16 @@ Readiness is an informational indicator only. The system does not authorize or a
 
 | Layer | Choice | Status |
 | --- | --- | --- |
-| Frontend | HTML, CSS, JavaScript | Done |
-| Backend | Python, FastAPI | Done |
-| Database (local development) | SQLite | Done |
+| Frontend | Plain HTML, CSS and JavaScript (ES modules), no framework or build step; one page with two tabs, served by FastAPI | Done |
+| Backend | Python 3, FastAPI (`fastapi`), served by Uvicorn (`uvicorn[standard]`) | Done |
+| Validation | Pydantic v2 models (`app/models.py`): required fields, allowed statuses, a Blocked milestone needs a cause | Done |
+| Database (local development) | SQLite through Python's built-in `sqlite3`, no ORM (SQLAlchemy dropped on November 10, 2026) | Done |
 | Database (production) | PostgreSQL or SQLite | To decide with the Render deployment |
-| Data access | Python's built-in `sqlite3` | Done; SQLAlchemy dropped (decided November 10, 2026) |
-| AI | Anthropic API (Claude), server-side only | Done, tested against the live API (Nov 4, 2026) |
-| Source control | GitHub | Done |
+| Dates and holidays | Python's `zoneinfo` (agency time zone, `CAREOPS_TZ`) and a configurable holiday list (`CAREOPS_HOLIDAYS`) | Done |
+| AI | Anthropic Claude API through the official Python SDK (`anthropic`), model `claude-opus-5-5`, called server-side only (`app/ai.py`): severity suggestion, readiness summary, client email draft | Done, tested against the live API (Nov 4, 2026) |
+| Configuration | `python-dotenv` (`.env`: `ANTHROPIC_API_KEY`, `CAREOPS_TZ`, `CAREOPS_HOLIDAYS`) | Done |
+| Tests | pytest, with FastAPI's `TestClient` (needs `httpx`); 33 tests | Done |
+| Source control | GitHub, with a pre-commit hook that blocks committed secrets (`.githooks/pre-commit`) | Done |
 | Deployment | Render | Planned |
 
 ## Architecture
