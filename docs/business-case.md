@@ -51,7 +51,7 @@ When milestones and bugs live in separate tools, the "ready / not ready" call is
 | --- | --- | --- |
 | Usability | 3/3 testers complete the core workflow | Not run yet |
 | Blocker visibility | 3/3 testers find what blocks a client in under 30 seconds | Not run yet |
-| Readiness accuracy | 10/10 readiness scenarios pass | Covered by automated tests (34 pass); not yet run as a 10-scenario session with testers |
+| Readiness accuracy | 10/10 readiness scenarios pass | Covered by automated tests (35 pass); not yet run as a 10-scenario session with testers |
 | Data persistence | 10/10 persistence checks pass | Refresh and restart checks pass in the automated tests and the end-to-end plan |
 | Deployment reliability | A hosted demo works | Not deployed yet (Render planned) |
 

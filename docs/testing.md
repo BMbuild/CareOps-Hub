@@ -2,7 +2,7 @@
 
 Back to the [README](../README.md).
 
-Run the automated tests with `python -m pytest` (34 tests). Each test uses a temporary database, never `data/careops.db`. Test names are in French because they were written before the interface switched to English.
+Run the automated tests with `python -m pytest` (35 tests). Each test uses a temporary database, never `data/careops.db`. Test names are in French because they were written before the interface switched to English.
 
 ## Presentation demo
 

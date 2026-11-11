@@ -49,19 +49,19 @@ uvicorn app.main:app --reload
 **What you should see.** Open http://localhost:8000: three client cards at the top, one Not Ready (Horizon Home Care), one At Risk (CareFirst Brooklyn) and one Ready (Queens Wellness Care). The **Reset demo** button restores this demo data at any time. If port 8000 is taken, add `--port 8001` to the last command and open that port instead.
 
 - API documentation: http://localhost:8000/docs
-- Tests: `python -m pytest` (34 tests)
+- Tests: `python -m pytest` (35 tests)
 - Contributors: `git config core.hooksPath .githooks` turns on the hook that blocks committed secrets.
 
 ## How readiness works
 
-The rules are checked in this order; the first one that applies sets the status. They live in `app/readiness.py`.
+The rules are checked in this order; the first one that applies sets the status. They live in `app/readiness.py`, and `test_tableau_de_decision_du_readme` checks this table row by row.
 
 | Status | When |
 | --- | --- |
-| **Not Ready** | An open Critical issue affects the client, or one of its milestones is Blocked |
+| **Not Ready** | An unresolved Critical issue (Open or In Progress) affects the client, or one of its milestones is Blocked |
 | **At Risk** | Otherwise, a milestone is past its due date |
 | **Ready** | Otherwise, every milestone is Done |
-| **In Progress** | Anything else (milestones still to do, or none yet) |
+| **In Progress** | Anything else (milestones still to do, or no milestones yet) |
 
 **Which clients an issue affects:** the clients it is linked to (choosing a milestone links that milestone's client), or every client when it is marked **All clients**. Medium and Low issues never change readiness.
 
@@ -149,7 +149,7 @@ The interface, data and documentation are in English. Code comments, test names 
 
 ## Status and next steps (November 11, 2026)
 
-Done: both workspaces on FastAPI and SQLite, the readiness and triage rules, the three Claude features, the English interface, and the presentation demo, all covered by 34 automated tests.
+Done: both workspaces on FastAPI and SQLite, the readiness and triage rules, the three Claude features, the English interface, and the presentation demo, all covered by 35 automated tests.
 
 1. Rehearse the [presentation demo](docs/testing.md#presentation-demo) together, with Sarah driving the Implementation workspace; it doubles as the end-to-end rerun.
 2. Deploy on Render, and decide whether production uses PostgreSQL or stays on SQLite.

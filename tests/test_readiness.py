@@ -177,3 +177,33 @@ def test_jours_feries_reglables(monkeypatch):
     monkeypatch.setenv("CAREOPS_HOLIDAYS", "2026-13-01")
     with pytest.raises(ValueError, match="CAREOPS_HOLIDAYS"):
         holidays()
+
+
+def test_tableau_de_decision_du_readme():
+    """Le tableau « How readiness works » du README, ligne par ligne, dans son ordre."""
+    today = "2026-11-11"
+    client = {"id": "c1", "name": "A"}
+
+    def status(milestones=(), issues=()):
+        state = {"clients": [client], "milestones": list(milestones), "issues": list(issues)}
+        return compute_readiness(client, state, today)["status"]
+
+    def step(st, due="2026-12-01", blocker=""):
+        return {"id": st, "clientId": "c1", "name": st, "dueDate": due, "owner": "", "status": st, "blocker": blocker}
+
+    def issue(severity, state="Open", client_ids=("c1",)):
+        return {"id": "i", "title": "Bug", "severity": severity, "state": state, "clientIds": list(client_ids), "allClients": False, "createdAt": today}
+
+    late = step("To Do", due="2026-11-01")
+    # Not Ready : un Critique non résolu (Open ou In Progress) touche le client, ou une étape est Blocked.
+    assert status([step("Done")], [issue("Critical")]) == "Not Ready"
+    assert status([step("Done")], [issue("Critical", "In Progress")]) == "Not Ready"
+    assert status([step("Blocked", blocker="X"), late]) == "Not Ready"  # prioritaire sur At Risk
+    assert status([step("Done")], [issue("Critical", client_ids=())]) == "Not Ready"  # To triage : bloque tout le monde
+    # At Risk : sinon, une étape est en retard (même si un Medium est ouvert).
+    assert status([late, step("Done")], [issue("Medium")]) == "At Risk"
+    # Ready : sinon, toutes les étapes sont Done (un Critique résolu ne compte plus).
+    assert status([step("Done")], [issue("Critical", "Resolved"), issue("Low")]) == "Ready"
+    # In Progress : tout le reste, y compris aucune étape.
+    assert status([step("To Do"), step("Done")]) == "In Progress"
+    assert status([]) == "In Progress"
