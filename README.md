@@ -24,7 +24,9 @@ Built by Brahim and Sarah as a two-week minimum viable product (MVP) for the fin
 
 *Implementation workspace (Sarah), same data: the banner explains why Horizon is not ready, the blocked milestone states its cause, and the issues logged by Product appear read-only.*
 
-Captured on November 11, 2026 from the demo data. The step-by-step presentation demo is in [docs/testing.md](docs/testing.md#presentation-demo).
+**Demo video (2:07):** [docs/demo/careops-hub-demo.mp4](docs/demo/careops-hub-demo.mp4) shows the real app running the full flow: a milestone is added, a critical issue makes the client Not Ready, the fix and the finished milestone bring it back to Ready, the data survives a refresh, and Claude drafts the client email. The narration script is in [docs/demo/narration-script.md](docs/demo/narration-script.md).
+
+Screenshots captured on November 11, 2026 from the demo data. The step-by-step presentation demo is in [docs/testing.md](docs/testing.md#presentation-demo).
 
 ## Run it locally
 
